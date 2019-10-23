@@ -1,10 +1,17 @@
 import argparse
 import os
 import time
+import threading
+import traceback
 
 from flask import Flask, request, redirect, jsonify
 
+#import credentials
+credentials = type('creds', (), {})(); credentials.url = 'sqlite:////tmp/db.test.sqlite3'
 import db
+
+DB = None
+
 
 def create_app(source_dir, template_dir):
     app = Flask(__name__, static_folder=source_dir,
@@ -15,13 +22,28 @@ def create_app(source_dir, template_dir):
         """Return page on root path"""
         return (jsonify({'yep': 200}), 200)
 
+    @app.route("/api/login", methods=['POST'])
+    def login():  # pylint: disable=unused-variable
+        try:
+            results = DB.login_user(request.form['email'], request.form['password'])
+        except:
+            return (jsonify({'error': traceback.format_exc()}), 400)
+        return (jsonify(results), 200)
+
+    @app.route("/api/login/create", methods=['POST'])
+    def create_login():  # pylint: disable=unused-variable
+        try:
+            user = DB.add_user(request.form['email'], request.form['password'])
+        except:
+            return (jsonify({'error': traceback.format_exc()}), 400)
+        return (jsonify({'id': user.id}), 200)
+
     @app.errorhandler(404)
     def page_not_found(error):  # pylint: disable=unused-argument,unused-variable
         """ If they access a page that is not available, show the error message.
             error - the error of type werkzeug.exceptions.NotFound
         """
-
-        return (jsonify({'error': request.url}), 404)
+        return (jsonify({'error': 'Bad URL: ' + request.url}), 404)
 
     return app
 
@@ -43,8 +65,11 @@ def parse_args():
 
 def main():
     args = parse_args()
-    app = create_app(args.ui, os.path.join(args.ui, 'template'))
-    app.run(host='0.0.0.0', debug=args.debug, port=args.port)
+    with db.Connect(credentials.url) as database:
+        global DB
+        DB = database
+        app = create_app(args.ui, os.path.join(args.ui, 'template'))
+        app.run(host='0.0.0.0', debug=args.debug, port=args.port)
 
 
 if __name__ == '__main__':

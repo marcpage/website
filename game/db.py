@@ -141,7 +141,8 @@ class Database:
     def __init__(self, db_url):
         self.__db_url = db_url
         self.__engine = sqlalchemy.create_engine(db_url)
-        Session = sqlalchemy.orm.sessionmaker(bind=self.__engine)
+        factory = sqlalchemy.orm.sessionmaker(bind=self.__engine)
+        Session = sqlalchemy.orm.scoped_session(factory)
         self.__session = Session()
         self.__create_tables()
 

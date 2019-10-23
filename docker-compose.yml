@@ -9,15 +9,10 @@ services:
             - ./logs/nginx:/var/log/nginx
             - ./configs/nginx.conf:/etc/nginx/nginx.conf
             - ./configs/http_server.conf:/etc/nginx/conf.d/default.conf
-        networks:
-            - internal
+        links:
+            - "game:game_api"
     game:
         build: ./game
         image: marcp/gameapp:0.1
         volumes:
             - ./game:/usr/src/app
-        networks:
-            - internal
-
-networks:
-    internal:
