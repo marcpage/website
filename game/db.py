@@ -346,7 +346,7 @@ def test(url):
 
 if __name__ == '__main__':
     test('sqlite:////tmp/db.test.sqlite3')
-    test('mysql+mysqlconnector://marcp:p455w0rd@localhost/game')
+    #test('mysql+mysqlconnector://marcp:p455w0rd@localhost/game')
 
 """
 brew install mysql
