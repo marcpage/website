@@ -5,7 +5,7 @@ services:
         ports:
             - 8088:80
         volumes:
-            - ./webserver:/usr/share/nginx/html
+            - ./static_content:/usr/share/nginx/html
         networks:
             - internal
 networks:
