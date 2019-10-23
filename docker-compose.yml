@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+    webserver:
+        image: nginx:alpine
+        ports:
+            - 8088:80
+        volumes:
+            - ./webserver:/usr/share/nginx/html
+        networks:
+            - internal
+networks:
+    internal:
+
+
