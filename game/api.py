@@ -24,19 +24,38 @@ def create_app(source_dir, template_dir):
 
     @app.route("/api/login", methods=['POST'])
     def login():  # pylint: disable=unused-variable
+
         try:
-            results = DB.login_user(request.form['email'], request.form['password'])
+            request_form = request.get_json()
+            user = DB.login_user(request_form['email'], request_form['password'])
         except:
-            return (jsonify({'error': traceback.format_exc()}), 400)
-        return (jsonify(results), 200)
+            return (jsonify({'error': traceback.format_exc(), 'type': 'exception'}), 400)
+
+        if not user.id and not user.password_hash:
+            return (jsonify({'error': 'Email does not exists: ' + request_form['email'], 'field': 'email'}), 400)
+
+        if not user.id:
+            return (jsonify({'error': 'Bad password', 'field': 'password'}), 400)
+
+        return (jsonify({'email': user.email,
+                         'id': user.id,
+                         'password_hash': user.password_hash}), 200)
 
     @app.route("/api/login/create", methods=['POST'])
     def create_login():  # pylint: disable=unused-variable
+
         try:
-            user = DB.add_user(request.form['email'], request.form['password'])
+            request_form = request.get_json()
+            user = DB.add_user(request_form['email'], request_form['password'])
         except:
-            return (jsonify({'error': traceback.format_exc()}), 400)
-        return (jsonify({'id': user.id}), 200)
+            return (jsonify({'error': traceback.format_exc(), 'type': 'exception'}), 400)
+
+        if not user.password_hash:
+            return (jsonify({'error': 'Email already exists: ' + request_form['email'], 'field': 'email', 'reason': 'duplicate'}), 400)
+
+        return (jsonify({'email': user.email,
+                         'id': user.id,
+                         'password_hash': user.password_hash}), 200)
 
     @app.errorhandler(404)
     def page_not_found(error):  # pylint: disable=unused-argument,unused-variable

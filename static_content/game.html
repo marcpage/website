@@ -1,0 +1,91 @@
+<html>
+	<head>
+		<title>Real Life Financial Game</title>
+		<script>
+			function request(url, data, action) {
+				var xhr = new XMLHttpRequest();
+
+				xhr.open("POST", url, true);
+				xhr.setRequestHeader('Content-Type', 'application/json');
+				xhr.send(JSON.stringify(data));
+				xhr.onload = function() {
+					var response = JSON.parse(this.responseText);
+					if (response.error && response.type == "exception") {
+						console.log(response.error);
+					} else {
+						action(response);
+					}
+				}
+			}
+
+			function create_user() {
+				request("/api/login/create", {
+						email: document.getElementById("new_user_email").value,
+						password: document.getElementById("new_user_password").value
+					}, function(response) {
+						if(response.id) {
+							window.localStorage.setItem('user', response.id);
+						} else if (response.field == "email" && response.reason == "duplicate") {
+							window.alert("The email address "
+											+ document.getElementById("new_user_email").value
+											+ " already has an account!");
+							document.getElementById("new_user_email").focus();
+						} else {
+							window.alert("Unknown error");
+							console.log(response);
+						}
+						document.getElementById("new_user_email").value = "";
+						document.getElementById("new_user_password").value = "";
+					}
+				)
+			}
+
+			function login_user() {
+				request("/api/login", {
+						email: document.getElementById("login_user_email").value,
+						password: document.getElementById("login_user_password").value
+					}, function(response) {
+						if(response.id) {
+							window.localStorage.setItem('user', response.id);
+						} else if (response.field == "email") {
+								window.alert("Unknown email: "
+									+ document.getElementById("login_user_email").value);
+						} else if (response.field == "password") {
+								window.alert("Incorrect password for: "
+									+ document.getElementById("login_user_email").value);
+						} else {
+							window.alert("Unknown error");
+							console.log(response);
+						}
+					}
+				)
+			}
+
+		</script>
+		<style>
+			#new_user {
+				background: red;
+			}
+			#login {
+				background: green;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="new_user">
+			<form id="new_user_form">
+				<input id="new_user_email" name="email" placeholder="email address"/>
+				<input id="new_user_password" name="password" type="password" placeholder="password"/>
+				<input type="button" value="Create Account" onclick="create_user();"/>
+			</form>
+			<textarea id='new_user_debug'></textarea>
+		</div>
+		<div id="login">
+			<form id="login_user_form">
+				<input id="login_user_email" name="email" placeholder="email address"/>
+				<input id="login_user_password" name="password" type="password" placeholder="password"/>
+				<input type="button" value="Login" onclick="login_user();"/>
+			</form>
+		</div>
+	</body>
+</html>

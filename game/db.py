@@ -170,20 +170,35 @@ class Database:
     def list_banks(self):
         return self.__session.query(Bank).all()
 
+    def __find_user(self, email):
+        return self.__session.query(User).filter(sqlalchemy.func.lower(User.email) == sqlalchemy.func.lower(email)).one_or_none()
+
     def add_user(self, email, password):
+        user = self.__find_user(email)
+
+        if user:
+            return User(id=None)
+
         password_hash = Database.__hash(password)
         user = User(email=email, password_hash=password_hash)
         self.__session.add(user)
         self.__session.commit()
         return user
 
+    def get_user(self, user_id):
+        return self.__session.query(User).filter_by(id=user_id).one_or_none()
+
     def login_user(self, email, password):
-        user = self.__session.query(User).filter_by(email=email).one_or_none()
+        user = self.__find_user(email)
+
         if not user:
             return User(email=email)
+
         password_hash = Database.__hash(password)
+
         if password_hash != user.password_hash:
             return User(email=email, password_hash=password_hash)
+
         return user
 
     def add_account(self, user, bank, account_name, account_type):
