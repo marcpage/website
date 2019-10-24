@@ -84,6 +84,21 @@
 
 			function load_bank_list() {
 				request("/api/bank/list", {}, function(response) {
+					var bank_list = document.getElementById("bank_list");
+
+					while (bank_list.firstChild) {
+						bank_list.removeChild(bank_list.firstChild);
+					}
+
+					response.banks.forEach(function (value, index, array) {
+						var option = document.createElement('option');
+
+						option.value = value.id;
+						option.label = value.name;
+						option.innerText = value.name;
+
+						bank_list.appendChild(option);
+					})
 					console.log(response);
 				})
 			}
