@@ -155,6 +155,11 @@ class Database:
         hasher.update(text.encode('utf-8'))
         return hasher.hexdigest()
 
+    def __add(self, object):
+        self.__session.add(object)
+        self.__session.commit()
+        return object
+
     def engine(self):
         return self.__engine
 
@@ -163,9 +168,7 @@ class Database:
         self.__session.close()
 
     def add_bank(self, name, url):
-        bank = Bank(name=name, url=url)
-        self.__session.add(bank)
-        return bank
+        return self.__add(Bank(name=name, url=url))
 
     def list_banks(self):
         return self.__session.query(Bank).all()
@@ -179,11 +182,7 @@ class Database:
         if user:
             return User(id=None)
 
-        password_hash = Database.__hash(password)
-        user = User(email=email, password_hash=password_hash)
-        self.__session.add(user)
-        self.__session.commit()
-        return user
+        return self.__add(User(email=email, password_hash=Database.__hash(password)))
 
     def get_user(self, user_id):
         return self.__session.query(User).filter_by(id=user_id).one_or_none()
@@ -202,22 +201,19 @@ class Database:
         return user
 
     def add_account(self, user, bank, account_name, account_type):
-        account = Account(user=user, bank=bank, name=account_name, type=account_type)
-        self.__session.add(account)
-        return account
+        return self.__add(Account(user=user, bank=bank, name=account_name,
+                                  type=account_type))
 
     def list_accounts(self, user, account_type):
         return self.__session.query(Account).filter_by(user=user, type=account_type).all()
 
     def add_statement(self, account, start, end, fees, interest, deposits,
                       withdrawals, start_balance, end_balance):
-        statement = Statement(account=account,
-                              start=start, end=end,
-                              fees=fees, interest=interest,
-                              deposits=deposits, withdrawals=withdrawals,
-                              start_balance=start_balance, end_balance=end_balance)
-        self.__session.add(statement)
-        return statement
+        return self.__add(Statement(account=account,
+                                    start=start, end=end,
+                                    fees=fees, interest=interest,
+                                    deposits=deposits, withdrawals=withdrawals,
+                                    start_balance=start_balance, end_balance=end_balance))
 
     def list_statements(self, account, limit):
         return self.__session.query(Statement).filter_by(account=account

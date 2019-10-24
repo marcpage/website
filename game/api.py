@@ -59,6 +59,39 @@ def create_app(source_dir, template_dir):
                          'id': user.id,
                          'password_hash': user.password_hash}), 200)
 
+    @app.route("/api/bank/list", methods=['POST'])
+    def list_banks():  # pylint: disable=unused-variable
+
+        try:
+            request_form = request.get_json()
+            banks = DB.list_banks()
+            bank_list = [{'name': bank.name,
+                 'url': bank.url,
+                 'id': bank.id} for bank in banks]
+        except:
+            return (jsonify({'error': traceback.format_exc(), 'type': 'exception'}), 400)
+
+        return (jsonify({'banks': bank_list}), 200)
+
+    @app.route("/api/bank/create", methods=['POST'])
+    def create_bank():  # pylint: disable=unused-variable
+
+        try:
+            request_form = request.get_json()
+            banks = DB.list_banks()
+            found = [bank for bank in banks if bank.name.lower() == request_form['name'].lower()]
+            if not found:
+                bank = DB.add_bank(request_form['name'], request_form['url'])
+            else:
+                bank = banks[0]
+        except:
+            return (jsonify({'error': traceback.format_exc(), 'type': 'exception'}), 400)
+
+        return (jsonify({'name': bank.name,
+                         'id': bank.id,
+                         'url': bank.url}), 200)
+
+
     @app.errorhandler(404)
     def page_not_found(error):  # pylint: disable=unused-argument,unused-variable
         """ If they access a page that is not available, show the error message.

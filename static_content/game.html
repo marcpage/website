@@ -11,6 +11,7 @@
 					throw new Error("This browser does not support XMLHttpRequest.");
 				};
 			}
+
 			function request(url, data, action) {
 				var xhr = new XMLHttpRequest();
 
@@ -70,6 +71,23 @@
 				)
 			}
 
+			function add_bank() {
+				request("/api/bank/create", {
+						name: document.getElementById("new_bank_name").value,
+						url: document.getElementById("new_bank_url").value
+					}, function(response) {
+						document.getElementById("new_bank_name").value = "";
+						document.getElementById("new_bank_url").value = "";
+					}
+				)
+			}
+
+			function load_bank_list() {
+				request("/api/bank/list", {}, function(response) {
+					console.log(response);
+				})
+			}
+
 		</script>
 		<style>
 			#new_user {
@@ -78,22 +96,44 @@
 			#login {
 				background: green;
 			}
+			#add_bank {
+				background: blue;
+			}
+			#add_account {
+				background: yellow;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="new_user">
-			<form id="new_user_form">
+			<form>
 				<input id="new_user_email" name="email" placeholder="email address"/>
 				<input id="new_user_password" name="password" type="password" placeholder="password"/>
 				<input type="button" value="Create Account" onclick="create_user();"/>
 			</form>
-			<textarea id='new_user_debug'></textarea>
 		</div>
+
 		<div id="login">
-			<form id="login_user_form">
+			<form>
 				<input id="login_user_email" name="email" placeholder="email address"/>
 				<input id="login_user_password" name="password" type="password" placeholder="password"/>
 				<input type="button" value="Login" onclick="login_user();"/>
+			</form>
+		</div>
+
+		<div id="add_bank">
+			<form>
+				<input id="new_bank_name" name="name" placeholder="Bank name"/>
+				<input id="new_bank_url" name="url" placeholder="Bank login address i.e. http://bank.com/login"/>
+				<input type="button" value="Add Bank" onclick="add_bank();"/>
+			</form>
+		</div>
+
+		<div id="add_account">
+			<form>
+				<select id="bank_list" onfocus="load_bank_list();">
+					<option>Select Bank</option>
+				</select>
 			</form>
 		</div>
 	</body>
