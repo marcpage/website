@@ -5,4 +5,5 @@ WORKDIR /usr/src/app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "python", "./api.py", "--ui", "/tmp" ]
+ENTRYPOINT [ "python", "./api.py"]
+CMD ["--help"]

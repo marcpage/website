@@ -32,7 +32,8 @@ def create_app(source_dir, template_dir):
             return (jsonify({'error': traceback.format_exc(), 'type': 'exception'}), 400)
 
         if not user.id and not user.password_hash:
-            return (jsonify({'error': 'Email does not exists: ' + request_form['email'], 'field': 'email'}), 400)
+            return (jsonify({'error': 'Email does not exists: ' + request_form['email'],
+                             'field': 'email'}), 400)
 
         if not user.id:
             return (jsonify({'error': 'Bad password', 'field': 'password'}), 400)
@@ -51,7 +52,8 @@ def create_app(source_dir, template_dir):
             return (jsonify({'error': traceback.format_exc(), 'type': 'exception'}), 400)
 
         if not user.password_hash:
-            return (jsonify({'error': 'Email already exists: ' + request_form['email'], 'field': 'email', 'reason': 'duplicate'}), 400)
+            return (jsonify({'error': 'Email already exists: ' + request_form['email'],
+                             'field': 'email', 'reason': 'duplicate'}), 400)
 
         return (jsonify({'email': user.email,
                          'id': user.id,
@@ -75,7 +77,7 @@ def parse_args():
                         help='The port to listen on (default 80)')
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Debug the web server')
-    parser.add_argument('-u', '--ui', type=str, required=True,
+    parser.add_argument('-u', '--ui', type=str, default='/tmp',
                         help='Path to the UI directory.')
     args = parser.parse_args()
 
