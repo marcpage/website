@@ -23,12 +23,12 @@ class User(Alchemy_Base):
 
     @staticmethod
     def hash(text):
-        hasher = hashlib.new("sha256")
+        hasher = hashlib.new('sha256')
         hasher.update(text.encode('utf-8'))
         return hasher.hexdigest()
 
     def set_password(self, password):
-        hasher = hashlib.new("sha256")
+        hasher = hashlib.new('sha256')
         hasher.update(text.encode('utf-8'))
         password_hash = User.hash(password)
 
@@ -39,6 +39,25 @@ class User(Alchemy_Base):
         return 'User(id=%s, email="%s", password_hash="%s")'%(self.id,
                                                               self.email,
                                                               self.password_hash)
+
+
+class Account(Alchemy_Base):
+    __tablename__ = 'account'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    name = sqlalchemy.Column(sqlalchemy.String(100))
+    type = sqlalchemy.Column(sqlalchemy.String(5))
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
+    user = sqlalchemy.orm.relationship('User', backref='accounts')
+    asset_id = sqlalchemy.Column(sqlalchemy.Integer,
+                                 sqlalchemy.ForeignKey('account.id'))
+    asset = sqlalchemy.orm.relationship('Account')
+    debts = sqlalchemy.orm.relationship('Account', remote_side=[id])
+
+
+    def __repr__(self):
+        return ('Account(id=%s, name="%s", ' +
+               'type="%s", bank_id=%s, user_id=%s)')%(self.id, self.name, self.type,
+                                                    self.bank_id, self.user_id)
 
 
 class Connect(threading.Thread):

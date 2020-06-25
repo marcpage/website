@@ -42,7 +42,7 @@ def test_db_contents(database):
 
 def test(url):
     logging.basicConfig()
-    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    #logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
     with db.Connect(url) as database:
         test_fill_db(database)
