@@ -32,12 +32,120 @@ def test_db_contents_users(database):
         raise SyntaxError('logging other in passed and should not have: ' + str(other))
 
 
+def test_fill_db_accounts(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    my_bank_account = database.add_account(myself['id'],
+                                           'bank savings',
+                                           'http://bank.com/',
+                                           'usual login',
+                                           'SAVE')
+    my_cc = database.add_account(myself['id'],
+                                 'bank visa',
+                                 'http://bank.com/',
+                                 'usual login',
+                                 'CC')
+    my_house = database.add_account(myself['id'],
+                                    'home',
+                                    'http://zillow.com/',
+                                    'address',
+                                    'HOUSE')
+    my_mortgage = database.add_account(myself['id'],
+                                    'home mortgage',
+                                    'http://morgage.com/',
+                                    'account id',
+                                    'MORT',
+                                    my_house['id'])
+
+    your_cc = database.add_account(you['id'],
+                                 'bank mastercard',
+                                 'http://creditunion.org/',
+                                 'usual login',
+                                 'CC')
+
+
+def test_db_contents_accounts(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+    my_accounts = database.list_accounts(myself['id'])
+    your_accounts = database.list_accounts(you['id'])
+
+    if len(my_accounts) != 4:
+        raise SyntaxError('my accounts count was wrong, expected 4, got '
+                          + str(len(my_accounts)))
+
+    if len(your_accounts) != 1:
+        raise SyntaxError('your accounts count was wrong, expected 1, got '
+                          + str(len(your_accounts)))
+
+    if (your_accounts[0]['name'] != 'bank mastercard'
+        or your_accounts[0]['url'] != 'http://creditunion.org/'
+        or your_accounts[0]['info'] != 'usual login'
+        or your_accounts[0]['type'] != 'CC'):
+        raise SyntaxError('your account was not what we expected: '
+                          + str(your_accounts[0]))
+
+    my_cc = [x for x in my_accounts if x['type'] == 'CC']
+
+    if len(my_cc) != 1:
+        raise SyntaxError('Looked for 1 CC but found: ' + str(my_cc))
+
+    if (my_cc[0]['name'] != 'bank visa'
+        or my_cc[0]['url'] != 'http://bank.com/'
+        or my_cc[0]['info'] != 'usual login'):
+        raise SyntaxError('my CC account was not what we expected: '
+                          + str(my_cc[0]))
+
+    my_savings = [x for x in my_accounts if x['type'] == 'SAVE']
+
+    if len(my_savings) != 1:
+        raise SyntaxError('Looked for 1 savings account but found: '
+                          + str(my_savings))
+
+    if (my_savings[0]['name'] != 'bank savings'
+        or my_savings[0]['url'] != 'http://bank.com/'
+        or my_savings[0]['info'] != 'usual login'):
+        raise SyntaxError('my savings account was not what we expected: '
+                          + str(my_savings[0]))
+
+    my_house = [x for x in my_accounts if x['type'] == 'HOUSE']
+
+    if len(my_house) != 1:
+        raise SyntaxError('Looked for 1 house but found: '
+                          + str(my_house))
+
+    if (my_house[0]['name'] != 'home'
+        or my_house[0]['url'] != 'http://zillow.com/'
+        or my_house[0]['info'] != 'address'):
+        raise SyntaxError('my house was not what we expected: '
+                          + str(my_house[0]))
+
+    my_mortgage = [x for x in my_accounts if x['type'] == 'MORT']
+
+    if len(my_mortgage) != 1:
+        raise SyntaxError('Looked for 1 house but found: '
+                          + str(my_mortgage))
+
+    if (my_mortgage[0]['name'] != 'home mortgage'
+        or my_mortgage[0]['url'] != 'http://morgage.com/'
+        or my_mortgage[0]['info'] != 'account id'):
+        raise SyntaxError('my house was not what we expected: '
+                          + str(my_mortgage[0]))
+
+    if my_mortgage[0]['asset_id'] != my_house[0]['id']:
+        raise SyntaxError('mortgage asset id (%s) does not match house id (%s)'%(
+                          my_mortgage[0]['asset_id'], my_house[0]['id']))
+
+
 def test_fill_db(database):
     test_fill_db_users(database)
+    test_fill_db_accounts(database)
 
 
 def test_db_contents(database):
     test_db_contents_users(database)
+    test_db_contents_accounts(database)
 
 
 def test(url):

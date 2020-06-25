@@ -134,9 +134,9 @@ class Connect(threading.Thread):
                       type, asset_id))
         return results.get()
 
-    def list_accounts(self, user_id, type):
+    def list_accounts(self, user_id):
         results = queue.Queue()
-        self.__q.put(('account','list', results, user_id, type))
+        self.__q.put(('account','list', results, user_id))
         return results.get()
 
     def run(self):
@@ -193,12 +193,13 @@ class Connect(threading.Thread):
                     continue
 
                 elif command[1] == 'list':
-                    found = self.__session.query(Account).filter_by(user_id=user_id,
-                                                                    type=type).all()
+                    found = self.__session.query(Account).filter_by(user_id
+                                                                    =command[3]).all()
                     command[2].put([{'name': a.name, 'url': a.url, 'info': a.info,
                                      'type': a.type, 'user_id': a.user_id,
                                      'asset_id': a.asset_id, 'id': a.id}
                                     for a in found])
+                    continue
 
             logging.error('Unable to parse command: ' + str(command))
 
