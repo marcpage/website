@@ -15,6 +15,16 @@ import hashlib
 Alchemy_Base = sqlalchemy.ext.declarative.declarative_base()
 
 
+class Money(sqlalchemy.types.TypeDecorator):
+    impl = sqlalchemy.Integer
+
+    def process_bind_param(self, value, dialect):
+        return int(value * 100.0 + 0.005)
+
+    def process_result_value(self, value, dialect):
+        return value * 100.0
+
+
 class User(Alchemy_Base):
     __tablename__ = 'user'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
@@ -45,6 +55,8 @@ class Account(Alchemy_Base):
     __tablename__ = 'account'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String(100))
+    url = sqlalchemy.Column(sqlalchemy.String(1024))
+    info = sqlalchemy.Column(sqlalchemy.String(4096))
     type = sqlalchemy.Column(sqlalchemy.String(5))
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
     user = sqlalchemy.orm.relationship('User', backref='accounts')
@@ -53,11 +65,12 @@ class Account(Alchemy_Base):
     asset = sqlalchemy.orm.relationship('Account')
     debts = sqlalchemy.orm.relationship('Account', remote_side=[id])
 
-
     def __repr__(self):
         return ('Account(id=%s, name="%s", ' +
-               'type="%s", bank_id=%s, user_id=%s)')%(self.id, self.name, self.type,
-                                                    self.bank_id, self.user_id)
+               'type="%s", url="%s", info="%s", ' +
+               ' user_id=%s, asset_id=%s)')%(self.id, self.name, self.type,
+                                             self.url, self.info, self.user_id,
+                                             self.asset_id)
 
 
 class Connect(threading.Thread):
@@ -115,6 +128,17 @@ class Connect(threading.Thread):
         self.__q.put(('user','login',results, email, password))
         return results.get()
 
+    def add_account(self, user_id, name, url, info, type, asset_id=None):
+        results = queue.Queue()
+        self.__q.put(('account','add', results, user_id, name, url, info,
+                      type, asset_id))
+        return results.get()
+
+    def list_accounts(self, user_id, type):
+        results = queue.Queue()
+        self.__q.put(('account','list', results, user_id, type))
+        return results.get()
+
     def run(self):
         engine = self.__init()
 
@@ -157,6 +181,24 @@ class Connect(threading.Thread):
 
                     continue
 
+            elif command[0] == 'account':
+
+                if command[1] == 'add':
+                    info = {'name': command[4], 'url': command[5], 'info': command[6],
+                            'type': command[7], 'user_id': command[3],
+                            'asset_id': command[8]}
+                    account = self.__add(Account(**info))
+                    info['id'] = account.id
+                    command[2].put(info)
+                    continue
+
+                elif command[1] == 'list':
+                    found = self.__session.query(Account).filter_by(user_id=user_id,
+                                                                    type=type).all()
+                    command[2].put([{'name': a.name, 'url': a.url, 'info': a.info,
+                                     'type': a.type, 'user_id': a.user_id,
+                                     'asset_id': a.asset_id, 'id': a.id}
+                                    for a in found])
 
             logging.error('Unable to parse command: ' + str(command))
 
