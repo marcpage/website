@@ -11,6 +11,8 @@ import queue
 import logging
 import hashlib
 
+# TODO: Change user info
+# TODO: Change account info
 
 Alchemy_Base = sqlalchemy.ext.declarative.declarative_base()
 
@@ -23,6 +25,19 @@ class Money(sqlalchemy.types.TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return value * 100.0
+
+
+class Date(sqlalchemy.types.TypeDecorator):
+    impl = sqlalchemy.types.Date
+
+    def process_bind_param(self, value, dialect):
+        try:  # if it is a string, parse it, otherwise it must be datetime object
+            return datetime.datetime.strptime(value, "%Y/%m/%d")
+        except TypeError:
+            return from_user
+
+    def process_result_value(self, value, dialect):
+        return value
 
 
 class User(Alchemy_Base):
@@ -71,6 +86,36 @@ class Account(Alchemy_Base):
                ' user_id=%s, asset_id=%s)')%(self.id, self.name, self.type,
                                              self.url, self.info, self.user_id,
                                              self.asset_id)
+
+
+class Statement(Alchemy_Base):
+    __tablename__ = 'statement'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    start = sqlalchemy.Column(Date)
+    end = sqlalchemy.Column(Date)
+    fees = sqlalchemy.Column(Money())
+    interest = sqlalchemy.Column(Money())
+    deposits = sqlalchemy.Column(Money())
+    withdrawals = sqlalchemy.Column(Money())
+    start_balance = sqlalchemy.Column(Money())
+    end_balance = sqlalchemy.Column(Money())
+    account_id = sqlalchemy.Column(sqlalchemy.Integer,
+                                   sqlalchemy.ForeignKey('account.id'))
+    account = sqlalchemy.orm.relationship("Account", backref="statements")
+
+    def __repr__(self):
+        return ('Statement(id=%s, start="%s", end="%s", ' +
+                'fees=$%0.2f, interest=$%0.2f, ' +
+                'deposits=$%0.2f, withdrawals=$%0.2f, ' +
+                'start_balance=$%0.2f, end_balance=$%0.2f, ' +
+                'account_id=%s)')%(self.id, self.start, self.end,
+                                 self.fees if self.fees else -1,
+                                 self.interest if self.interest else -1,
+                                 self.deposits if self.deposits else -1,
+                                 self.withdrawals if self.withdrawals else -1,
+                                 self.start_balance if self.start_balance else -1,
+                                 self.end_balance if self.end_balance else -1,
+                                 self.account_id)
 
 
 class Connect(threading.Thread):
@@ -139,6 +184,20 @@ class Connect(threading.Thread):
         self.__q.put(('account','list', results, user_id))
         return results.get()
 
+    def add_statement(self, account_id, start, end,
+                      fees, interest, deposits, withdrawals,
+                      start_balance, end_balance):
+        results = queue.Queue()
+        self.__q.put(('statement','add', results, account_id,  start, end,
+                      fees, interest, deposits, withdrawals,
+                      start_balance, end_balance))
+        return results.get()
+
+    def list_statements(self, account_id):
+        results = queue.Queue()
+        self.__q.put(('statement','list', results, account_id))
+        return results.get()
+
     def run(self):
         engine = self.__init()
 
@@ -200,6 +259,36 @@ class Connect(threading.Thread):
                                      'asset_id': a.asset_id, 'id': a.id}
                                     for a in found])
                     continue
+
+            elif command[0] == 'statement':
+
+                if command[1] == 'add':
+                    info = {'account_id,': command[3],
+                            'start,': command[4],  'end,': command[5],
+                            'fees,': command[6],  'interest,': command[7],
+                            'deposits,': command[8],  'withdrawals,': command[9],
+                            'start_balance,': command[10],  'end_balance,': command[11]}
+                    print(info)
+                    print(Statement())
+                    statement = self.__add(Statement(**info))
+                    info['id'] = statement.id
+                    command[2].put(info)
+                    continue
+
+                elif command[1] == 'list':
+                    found = self.__session.query(Statement).filter_by(account_id
+                                                                    =command[3]).all()
+                    command[2].put([{'account_id': s.account_id,
+                                     'start': s.start, 'end': s.end,
+                                     'fees': s.fees, 'interest': s.interest,
+                                     'deposits': s.deposits,
+                                     'withdrawals': s.withdrawals,
+                                     'start_balance': s.start_balance,
+                                     'end_balance': s.end_balance,
+                                     'id': s.id}
+                                    for s in found])
+                    continue
+
 
             logging.error('Unable to parse command: ' + str(command))
 

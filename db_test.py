@@ -138,14 +138,58 @@ def test_db_contents_accounts(database):
                           my_mortgage[0]['asset_id'], my_house[0]['id']))
 
 
+def test_fill_db_statements(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    my_accounts = database.list_accounts(myself['id'])
+    your_accounts = database.list_accounts(you['id'])
+
+    my_savings = [x for x in my_accounts if x['type'] == 'SAVE'][0]
+    my_cc = [x for x in my_accounts if x['type'] == 'CC'][0]
+    my_house = [x for x in my_accounts if x['type'] == 'HOUSE'][0]
+    my_mortgage = [x for x in my_accounts if x['type'] == 'MORT'][0]
+    your_cc = [x for x in your_accounts if x['type'] == 'CC'][0]
+
+    database.add_statement(my_savings['id'],
+                           '2020/06/01', '2020/06/30',
+                           3.11, 1.13, 123.45, 456.78, 1000.00, 664.69)
+    database.add_statement(my_savings['id'],
+                           '2020/05/01', '2020/05/31',
+                           3.11, 1.13, 123.45, 456.78, 1335.31, 1000.00)
+
+
+def test_db_contents_statements(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    my_accounts = database.list_accounts(myself['id'])
+    your_accounts = database.list_accounts(you['id'])
+
+    my_savings = [x for x in my_accounts if x['type'] == 'SAVE'][0]
+    my_cc = [x for x in my_accounts if x['type'] == 'CC'][0]
+    my_house = [x for x in my_accounts if x['type'] == 'HOUSE'][0]
+    my_mortgage = [x for x in my_accounts if x['type'] == 'MORT'][0]
+    your_cc = [x for x in your_accounts if x['type'] == 'CC'][0]
+
+    my_savings_statements = database.list(my_savings['id'])
+
+    if len(my_savings_statements) != 2:
+        raise SyntaxError('Number of my savings statements expected 2 but found'
+                          + str(len(my_savings_statements)))
+
+    print(my_savings_statements)
+
 def test_fill_db(database):
     test_fill_db_users(database)
     test_fill_db_accounts(database)
+    test_fill_db_statements(database)
 
 
 def test_db_contents(database):
     test_db_contents_users(database)
     test_db_contents_accounts(database)
+    test_db_contents_statements(database)
 
 
 def test(url):
