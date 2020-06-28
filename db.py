@@ -279,23 +279,19 @@ class Connect(threading.Thread):
 
             # TODO: move to methods and put try/except around them
             try:
-                if command[0] == 'user' and command[1] == 'add':
-                    command[2].put(self.__add_user(*command[3:]))
+                calls = {'user': {
+                            'add': self.__add_user,
+                            'login': self.__login_user},
+                         'account': {
+                            'add': self.__add_account,
+                            'list': self.__list_accounts},
+                         'statement': {
+                            'add': self.__add_statement,
+                            'list': self.__list_statements}}
+                call = calls.get(command[0], {}).get(command[1], None)
 
-                elif command[0] == 'user' and command[1] == 'login':
-                    command[2].put(self.__login_user(*command[3:]))
-
-                elif command[0] == 'account' and command[1] == 'add':
-                    command[2].put(self.__add_account(*command[3:]))
-
-                elif command[0] == 'account' and command[1] == 'list':
-                    command[2].put(self.__list_accounts(*command[3:]))
-
-                elif command[0] == 'statement' and command[1] == 'add':
-                    command[2].put(self.__add_statement(*command[3:]))
-
-                elif command[0] == 'statement' and command[1] == 'list':
-                    command[2].put(self.__list_statements(*command[3:]))
+                if call:
+                    command[2].put(call(*command[3:]))
 
                 else:
                     logging.error('Unable to parse command: ' + str(command))
