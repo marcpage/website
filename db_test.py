@@ -172,10 +172,10 @@ def test_db_contents_statements(database):
     my_mortgage = [x for x in my_accounts if x['type'] == 'MORT'][0]
     your_cc = [x for x in your_accounts if x['type'] == 'CC'][0]
 
-    my_savings_statements = database.list(my_savings['id'])
+    my_savings_statements = database.list_statements(my_savings['id'])
 
     if len(my_savings_statements) != 2:
-        raise SyntaxError('Number of my savings statements expected 2 but found'
+        raise SyntaxError('Number of my savings statements expected 2 but found '
                           + str(len(my_savings_statements)))
 
     print(my_savings_statements)
