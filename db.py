@@ -11,6 +11,7 @@ import queue
 import logging
 import hashlib
 import traceback
+import datetime
 
 # TODO: Change user info
 # TODO: Change account info
@@ -244,13 +245,11 @@ class Connect(threading.Thread):
     def __add_statement(self, account_id, start, end,
                       fees, interest, deposits, withdrawals,
                       start_balance, end_balance):
-        info = {'account_id,': account_id,
-                'start,': start,  'end,': end,
-                'fees,': fees,  'interest,': interest,
-                'deposits,': deposits,  'withdrawals,': withdrawals,
-                'start_balance,': start_balance,  'end_balance,': end_balance}
-        print(info)
-        print(Statement())
+        info = {'account_id': account_id,
+                'start': start,  'end': end,
+                'fees': fees,  'interest': interest,
+                'deposits': deposits,  'withdrawals': withdrawals,
+                'start_balance': start_balance,  'end_balance': end_balance}
         statement = self.__add(Statement(**info))
         info['id'] = statement.id
         return info

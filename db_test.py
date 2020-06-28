@@ -179,6 +179,8 @@ def test_db_contents_statements(database):
                           + str(len(my_savings_statements)))
 
     print(my_savings_statements)
+    #[{'account_id': 1, 'start': datetime.date(2020, 6, 1), 'end': datetime.date(2020, 6, 30), 'fees': 31100.0, 'interest': 11300.0, 'deposits': 1234500.0, 'withdrawals': 4567800.0, 'start_balance': 10000000.0, 'end_balance': 6646900.0, 'id': 1}, {'account_id': 1, 'start': datetime.date(2020, 5, 1), 'end': datetime.date(2020, 5, 31), 'fees': 31100.0, 'interest': 11300.0, 'deposits': 1234500.0, 'withdrawals': 4567800.0, 'start_balance': 13353100.0, 'end_balance': 10000000.0, 'id': 2}]
+
 
 def test_fill_db(database):
     test_fill_db_users(database)
