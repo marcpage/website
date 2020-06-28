@@ -10,6 +10,7 @@ import threading
 import queue
 import logging
 import hashlib
+import traceback
 
 # TODO: Change user info
 # TODO: Change account info
@@ -198,6 +199,75 @@ class Connect(threading.Thread):
         self.__q.put(('statement','list', results, account_id))
         return results.get()
 
+    def __add_user(self, email, password):
+        user = self.__find_user(email=email)
+
+        if user:
+            return ({'id': None, 'valid': False})
+
+        else:
+            password_hash = password_hash=User.hash(password)
+            user = self.__add(User(email=email,
+                                   password_hash=password_hash))
+            return ({'id': user.id,
+                            'email': email,
+                            'valid': True})
+
+    def __login_user(self, email, password):
+        user = self.__find_user(email=email)
+
+        if not user:
+            return ({'id': None,
+                            'email': email,
+                            'valid': False})
+
+        else:
+            return ({'id': user.id,
+                            'email': email,
+                            'valid': user.password_matches(password)})
+
+    def __add_account(self, user_id, name, url, info, type, asset_id):
+        info = {'name': name, 'url': url, 'info': info, 'type': type,
+                'user_id': user_id, 'asset_id': asset_id}
+        account = self.__add(Account(**info))
+        info['id'] = account.id
+        return info
+
+    def __list_accounts(self, user_id):
+        found = self.__session.query(Account).filter_by(user_id
+                                                        =user_id).all()
+        return [{'name': a.name, 'url': a.url, 'info': a.info,
+                         'type': a.type, 'user_id': a.user_id,
+                         'asset_id': a.asset_id, 'id': a.id}
+                        for a in found]
+
+    def __add_statement(self, account_id, start, end,
+                      fees, interest, deposits, withdrawals,
+                      start_balance, end_balance):
+        info = {'account_id,': account_id,
+                'start,': start,  'end,': end,
+                'fees,': fees,  'interest,': interest,
+                'deposits,': deposits,  'withdrawals,': withdrawals,
+                'start_balance,': start_balance,  'end_balance,': end_balance}
+        print(info)
+        print(Statement())
+        statement = self.__add(Statement(**info))
+        info['id'] = statement.id
+        return info
+
+    def __list_statements(self, account_id):
+        found = self.__session.query(Statement).filter_by(account_id
+                                                        =account_id).all()
+        return [{'account_id': s.account_id,
+                         'start': s.start, 'end': s.end,
+                         'fees': s.fees, 'interest': s.interest,
+                         'deposits': s.deposits,
+                         'withdrawals': s.withdrawals,
+                         'start_balance': s.start_balance,
+                         'end_balance': s.end_balance,
+                         'id': s.id}
+                        for s in found]
+
     def run(self):
         engine = self.__init()
 
@@ -207,90 +277,32 @@ class Connect(threading.Thread):
             if None == command:
                 break
 
-            if command[0] == 'user':
+            # TODO: move to methods and put try/except around them
+            try:
+                if command[0] == 'user' and command[1] == 'add':
+                    command[2].put(self.__add_user(*command[3:]))
 
-                if command[1] == 'add':
-                    user = self.__find_user(email=command[3])
+                elif command[0] == 'user' and command[1] == 'login':
+                    command[2].put(self.__login_user(*command[3:]))
 
-                    if user:
-                        command[2].put({'id': None, 'valid': False})
+                elif command[0] == 'account' and command[1] == 'add':
+                    command[2].put(self.__add_account(*command[3:]))
 
-                    else:
-                        password_hash = password_hash=User.hash(command[4])
-                        user = self.__add(User(email=command[3],
-                                               password_hash=password_hash))
-                        command[2].put({'id': user.id,
-                                        'email': command[3],
-                                        'valid': True})
+                elif command[0] == 'account' and command[1] == 'list':
+                    command[2].put(self.__list_accounts(*command[3:]))
 
-                    continue
+                elif command[0] == 'statement' and command[1] == 'add':
+                    command[2].put(self.__add_statement(*command[3:]))
 
-                elif command[1] == 'login':
-                    user = self.__find_user(email=command[3])
+                elif command[0] == 'statement' and command[1] == 'list':
+                    command[2].put(self.__list_statements(*command[3:]))
 
-                    if not user:
-                        command[2].put({'id': None,
-                                        'email': command[3],
-                                        'valid': False})
+                else:
+                    logging.error('Unable to parse command: ' + str(command))
 
-                    else:
-                        command[2].put({'id': user.id,
-                                        'email': command[3],
-                                        'valid': user.password_matches(command[4])})
-
-                    continue
-
-            elif command[0] == 'account':
-
-                if command[1] == 'add':
-                    info = {'name': command[4], 'url': command[5], 'info': command[6],
-                            'type': command[7], 'user_id': command[3],
-                            'asset_id': command[8]}
-                    account = self.__add(Account(**info))
-                    info['id'] = account.id
-                    command[2].put(info)
-                    continue
-
-                elif command[1] == 'list':
-                    found = self.__session.query(Account).filter_by(user_id
-                                                                    =command[3]).all()
-                    command[2].put([{'name': a.name, 'url': a.url, 'info': a.info,
-                                     'type': a.type, 'user_id': a.user_id,
-                                     'asset_id': a.asset_id, 'id': a.id}
-                                    for a in found])
-                    continue
-
-            elif command[0] == 'statement':
-
-                if command[1] == 'add':
-                    info = {'account_id,': command[3],
-                            'start,': command[4],  'end,': command[5],
-                            'fees,': command[6],  'interest,': command[7],
-                            'deposits,': command[8],  'withdrawals,': command[9],
-                            'start_balance,': command[10],  'end_balance,': command[11]}
-                    print(info)
-                    print(Statement())
-                    statement = self.__add(Statement(**info))
-                    info['id'] = statement.id
-                    command[2].put(info)
-                    continue
-
-                elif command[1] == 'list':
-                    found = self.__session.query(Statement).filter_by(account_id
-                                                                    =command[3]).all()
-                    command[2].put([{'account_id': s.account_id,
-                                     'start': s.start, 'end': s.end,
-                                     'fees': s.fees, 'interest': s.interest,
-                                     'deposits': s.deposits,
-                                     'withdrawals': s.withdrawals,
-                                     'start_balance': s.start_balance,
-                                     'end_balance': s.end_balance,
-                                     'id': s.id}
-                                    for s in found])
-                    continue
-
-
-            logging.error('Unable to parse command: ' + str(command))
+            except:
+                logging.error(traceback.format_exc())
+                command[2].put((traceback.format_exc(),))
 
         self.__session.close()
 
