@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 __all__ = ['Connect']
@@ -27,6 +27,16 @@ class Money(sqlalchemy.types.TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return value / 100.0
+
+
+class InterestRate(sqlalchemy.types.TypeDecorator):
+    impl = sqlalchemy.Integer
+
+    def process_bind_param(self, value, dialect):
+        return int(value * 1000.0 + 0.005)
+
+    def process_result_value(self, value, dialect):
+        return value / 1000.0
 
 
 class Date(sqlalchemy.types.TypeDecorator):
@@ -74,6 +84,7 @@ class Account(Alchemy_Base):
     name = sqlalchemy.Column(sqlalchemy.String(100))
     url = sqlalchemy.Column(sqlalchemy.String(1024))
     info = sqlalchemy.Column(sqlalchemy.String(4096))
+    interest_rate = sqlalchemy.Column(InterestRate())
     type = sqlalchemy.Column(sqlalchemy.String(5))
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
     user = sqlalchemy.orm.relationship('User', backref='accounts')
@@ -84,8 +95,9 @@ class Account(Alchemy_Base):
 
     def __repr__(self):
         return ('Account(id=%s, name="%s", ' +
-               'type="%s", url="%s", info="%s", ' +
+               'type="%s", interest rate=%0.3f%% url="%s", info="%s", ' +
                ' user_id=%s, asset_id=%s)')%(self.id, self.name, self.type,
+                                             self.interest_rate,
                                              self.url, self.info, self.user_id,
                                              self.asset_id)
 
@@ -175,10 +187,11 @@ class Connect(threading.Thread):
         self.__q.put(('user','login',results, email, password))
         return results.get()
 
-    def add_account(self, user_id, name, url, info, type, asset_id=None):
+    def add_account(self, user_id, name, url, info, type, interest_rate=0.0,
+                    asset_id=None):
         results = queue.Queue()
         self.__q.put(('account','add', results, user_id, name, url, info,
-                      type, asset_id))
+                      type, interest_rate, asset_id))
         return results.get()
 
     def list_accounts(self, user_id):
@@ -227,9 +240,10 @@ class Connect(threading.Thread):
                             'email': email,
                             'valid': user.password_matches(password)})
 
-    def __add_account(self, user_id, name, url, info, type, asset_id):
+    def __add_account(self, user_id, name, url, info, type, interest_rate, asset_id):
         info = {'name': name, 'url': url, 'info': info, 'type': type,
-                'user_id': user_id, 'asset_id': asset_id}
+                'user_id': user_id, 'interest_rate': interest_rate,
+                'asset_id': asset_id}
         account = self.__add(Account(**info))
         info['id'] = account.id
         return info
@@ -239,6 +253,7 @@ class Connect(threading.Thread):
                                                         =user_id).all()
         return [{'name': a.name, 'url': a.url, 'info': a.info,
                          'type': a.type, 'user_id': a.user_id,
+                         'interest_rate': a.interest_rate,
                          'asset_id': a.asset_id, 'id': a.id}
                         for a in found]
 

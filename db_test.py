@@ -57,6 +57,7 @@ def test_fill_db_accounts(database):
                                     'http://morgage.com/',
                                     'account id',
                                     'MORT',
+                                    0.0,
                                     my_house['id'])
 
     your_cc = database.add_account(you['id'],
