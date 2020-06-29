@@ -43,6 +43,9 @@ class Date(sqlalchemy.types.TypeDecorator):
     impl = sqlalchemy.types.Date
 
     def process_bind_param(self, value, dialect):
+        if None == value:
+            return value
+
         try:  # if it is a string, parse it, otherwise it must be datetime object
             return datetime.datetime.strptime(value, "%Y/%m/%d")
         except TypeError:
@@ -106,6 +109,7 @@ class Statement(Alchemy_Base):
     __tablename__ = 'statement'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     start = sqlalchemy.Column(Date)
+    due = sqlalchemy.Column(Date)
     end = sqlalchemy.Column(Date)
     fees = sqlalchemy.Column(Money())
     interest = sqlalchemy.Column(Money())
@@ -119,10 +123,11 @@ class Statement(Alchemy_Base):
 
     def __repr__(self):
         return ('Statement(id=%s, start="%s", end="%s", ' +
+                'due="%s", ' +
                 'fees=$%0.2f, interest=$%0.2f, ' +
                 'deposits=$%0.2f, withdrawals=$%0.2f, ' +
                 'start_balance=$%0.2f, end_balance=$%0.2f, ' +
-                'account_id=%s)')%(self.id, self.start, self.end,
+                'account_id=%s)')%(self.id, self.start, self.end, self.due,
                                  self.fees if self.fees else -1,
                                  self.interest if self.interest else -1,
                                  self.deposits if self.deposits else -1,
@@ -199,11 +204,11 @@ class Connect(threading.Thread):
         self.__q.put(('account','list', results, user_id))
         return results.get()
 
-    def add_statement(self, account_id, start, end,
+    def add_statement(self, account_id, start, end, due,
                       fees, interest, deposits, withdrawals,
                       start_balance, end_balance):
         results = queue.Queue()
-        self.__q.put(('statement','add', results, account_id,  start, end,
+        self.__q.put(('statement','add', results, account_id,  start, end, due,
                       fees, interest, deposits, withdrawals,
                       start_balance, end_balance))
         return results.get()
@@ -257,11 +262,11 @@ class Connect(threading.Thread):
                          'asset_id': a.asset_id, 'id': a.id}
                         for a in found]
 
-    def __add_statement(self, account_id, start, end,
+    def __add_statement(self, account_id, start, end, due,
                       fees, interest, deposits, withdrawals,
                       start_balance, end_balance):
         info = {'account_id': account_id,
-                'start': start,  'end': end,
+                'start': start,  'end': end, 'due': due,
                 'fees': fees,  'interest': interest,
                 'deposits': deposits,  'withdrawals': withdrawals,
                 'start_balance': start_balance,  'end_balance': end_balance}
@@ -273,7 +278,7 @@ class Connect(threading.Thread):
         found = self.__session.query(Statement).filter_by(account_id
                                                         =account_id).all()
         return [{'account_id': s.account_id,
-                         'start': s.start, 'end': s.end,
+                         'start': s.start, 'end': s.end, 'due': s.due,
                          'fees': s.fees, 'interest': s.interest,
                          'deposits': s.deposits,
                          'withdrawals': s.withdrawals,

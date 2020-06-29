@@ -155,10 +155,10 @@ def test_fill_db_statements(database):
     your_cc = [x for x in your_accounts if x['type'] == 'CC'][0]
 
     database.add_statement(my_savings['id'],
-                           '2020/06/01', '2020/06/30',
+                           '2020/06/01', '2020/06/30', '2020/07/14',
                            3.11, 1.13, 123.45, 456.78, 1000.00, 664.69)
     database.add_statement(my_savings['id'],
-                           '2020/05/01', '2020/05/31',
+                           '2020/05/01', '2020/05/31', None,
                            3.11, 1.13, 123.45, 456.78, 1335.31, 1000.00)
 
 
@@ -189,6 +189,7 @@ def test_db_contents_statements(database):
                           + str(len(may_statement)))
 
     if (may_statement[0]['end'] != datetime.date(2020, 5, 31)
+        or may_statement[0]['due'] != None
         or may_statement[0]['fees'] != 3.11
         or may_statement[0]['deposits'] != 123.45
         or may_statement[0]['withdrawals'] != 456.78
@@ -206,6 +207,7 @@ def test_db_contents_statements(database):
                           + str(len(june_statement)))
 
     if (june_statement[0]['end'] != datetime.date(2020, 6, 30)
+        or june_statement[0]['due'] != datetime.date(2020, 7, 14)
         or june_statement[0]['fees'] != 3.11
         or june_statement[0]['deposits'] != 123.45
         or june_statement[0]['withdrawals'] != 456.78
