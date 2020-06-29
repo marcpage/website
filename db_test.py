@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import db
 import logging
@@ -57,7 +57,7 @@ def test_fill_db_accounts(database):
                                     'http://morgage.com/',
                                     'account id',
                                     'MORT',
-                                    0.0,
+                                    4.1,
                                     my_house['id'])
 
     your_cc = database.add_account(you['id'],
@@ -131,6 +131,7 @@ def test_db_contents_accounts(database):
 
     if (my_mortgage[0]['name'] != 'home mortgage'
         or my_mortgage[0]['url'] != 'http://morgage.com/'
+        or my_mortgage[0]['interest_rate'] != 4.1
         or my_mortgage[0]['info'] != 'account id'):
         raise SyntaxError('my house was not what we expected: '
                           + str(my_mortgage[0]))
