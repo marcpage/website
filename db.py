@@ -219,57 +219,6 @@ class Connect(threading.Thread):
                                                  == sqlalchemy.func.lower(email)
                                                  ).one_or_none()
 
-    def add_user(self, email, password):
-        results = queue.Queue()
-        self.__q.put(('user','add',results, email, password))
-        return results.get()
-
-    def login_user(self, email, password):
-        results = queue.Queue()
-        self.__q.put(('user','login',results, email, password))
-        return results.get()
-
-    def add_account(self, user_id, name, url, info, type, interest_rate=0.0,
-                    asset_id=None):
-        results = queue.Queue()
-        self.__q.put(('account','add', results, user_id, name, url, info,
-                      type, interest_rate, asset_id))
-        return results.get()
-
-    def list_accounts(self, user_id):
-        results = queue.Queue()
-        self.__q.put(('account','list', results, user_id))
-        return results.get()
-
-    def add_statement(self, account_id, start, end, due,
-                      fees, interest, deposits, withdrawals,
-                      start_balance, end_balance):
-        results = queue.Queue()
-        self.__q.put(('statement','add', results, account_id,  start, end, due,
-                      fees, interest, deposits, withdrawals,
-                      start_balance, end_balance))
-        return results.get()
-
-    def list_statements(self, account_id):
-        results = queue.Queue()
-        self.__q.put(('statement','list', results, account_id))
-        return results.get()
-
-    def add_feedback(self, user_id, type, subject, description):
-        results = queue.Queue()
-        self.__q.put(('feedback','add', results, user_id, type, subject, description))
-        return results.get()
-
-    def list_feedback(self, user_id):
-        results = queue.Queue()
-        self.__q.put(('feedback','list', results, user_id))
-        return results.get()
-
-    def relate_feedback(self, from_id, to_id, type):
-        results = queue.Queue()
-        self.__q.put(('feedback','relate', results, from_id, to_id, type))
-        return results.get()
-
     def __add_user(self, email, password):
         user = self.__find_user(email=email)
 
@@ -284,6 +233,11 @@ class Connect(threading.Thread):
                             'email': email,
                             'valid': True})
 
+    def add_user(self, email, password):
+        results = queue.Queue()
+        self.__q.put((self.__add_user, results, email, password))
+        return results.get()
+
     def __login_user(self, email, password):
         user = self.__find_user(email=email)
 
@@ -297,6 +251,11 @@ class Connect(threading.Thread):
                             'email': email,
                             'valid': user.password_matches(password)})
 
+    def login_user(self, email, password):
+        results = queue.Queue()
+        self.__q.put((self.__login_user, results, email, password))
+        return results.get()
+
     def __add_account(self, user_id, name, url, info, type, interest_rate, asset_id):
         info = {'name': name, 'url': url, 'info': info, 'type': type,
                 'user_id': user_id, 'interest_rate': interest_rate,
@@ -304,6 +263,13 @@ class Connect(threading.Thread):
         account = self.__add(Account(**info))
         info['id'] = account.id
         return info
+
+    def add_account(self, user_id, name, url, info, type, interest_rate=0.0,
+                    asset_id=None):
+        results = queue.Queue()
+        self.__q.put((self.__add_account, results, user_id, name, url, info,
+                      type, interest_rate, asset_id))
+        return results.get()
 
     def __list_accounts(self, user_id):
         found = self.__session.query(Account).filter_by(user_id
@@ -313,6 +279,11 @@ class Connect(threading.Thread):
                          'interest_rate': a.interest_rate,
                          'asset_id': a.asset_id, 'id': a.id}
                         for a in found]
+
+    def list_accounts(self, user_id):
+        results = queue.Queue()
+        self.__q.put((self.__list_accounts, results, user_id))
+        return results.get()
 
     def __add_statement(self, account_id, start, end, due,
                       fees, interest, deposits, withdrawals,
@@ -325,6 +296,15 @@ class Connect(threading.Thread):
         statement = self.__add(Statement(**info))
         info['id'] = statement.id
         return info
+
+    def add_statement(self, account_id, start, end, due,
+                      fees, interest, deposits, withdrawals,
+                      start_balance, end_balance):
+        results = queue.Queue()
+        self.__q.put((self.__add_statement, results, account_id,  start, end, due,
+                      fees, interest, deposits, withdrawals,
+                      start_balance, end_balance))
+        return results.get()
 
     def __list_statements(self, account_id):
         found = self.__session.query(Statement).filter_by(account_id
@@ -339,11 +319,21 @@ class Connect(threading.Thread):
                          'id': s.id}
                         for s in found]
 
+    def list_statements(self, account_id):
+        results = queue.Queue()
+        self.__q.put((self.__list_statements, results, account_id))
+        return results.get()
+
     def __add_feedback(self, user_id, type, subject, description):
         info = {'user_id': user_id, 'type': type, 'subject': subject, 'description': description}
         statement = self.__add(Feedback(**info))
         info['id'] = statement.id
         return info
+
+    def add_feedback(self, user_id, type, subject, description):
+        results = queue.Queue()
+        self.__q.put((self.__add_feedback, results, user_id, type, subject, description))
+        return results.get()
 
     def __list_feedback(self, user_id):
         found = self.__session.query(Feedback).filter_by(user_id
@@ -353,11 +343,21 @@ class Connect(threading.Thread):
                  'id': s.id}
                 for s in found]
 
+    def list_feedback(self, user_id):
+        results = queue.Queue()
+        self.__q.put((self.__list_feedback, results, user_id))
+        return results.get()
+
     def __relate_feedback(self, from_id, to_id, type):
         info = {'from_id': from_id, 'to_id': to_id, 'type': type}
         statement = self.__add(Feedback_Relationship(**info))
         info['id'] = statement.id
         return info
+
+    def relate_feedback(self, from_id, to_id, type):
+        results = queue.Queue()
+        self.__q.put((self.__relate_feedback, results, from_id, to_id, type))
+        return results.get()
 
     def run(self):
         engine = self.__init()
@@ -368,28 +368,8 @@ class Connect(threading.Thread):
             if None == command:
                 break
 
-            # TODO: move to methods and put try/except around them
             try:
-                calls = {'user': {
-                            'add': self.__add_user,
-                            'login': self.__login_user},
-                         'account': {
-                            'add': self.__add_account,
-                            'list': self.__list_accounts},
-                         'feedback': {
-                            'add': self.__add_feedback,
-                            'list': self.__list_feedback,
-                            'relate': self.__relate_feedback},
-                         'statement': {
-                            'add': self.__add_statement,
-                            'list': self.__list_statements}}
-                call = calls.get(command[0], {}).get(command[1], None)
-
-                if call:
-                    command[2].put(call(*command[3:]))
-
-                else:
-                    logging.error('Unable to parse command: ' + str(command))
+                command[1].put(command[0](*command[2:]))
 
             except:
                 logging.error(traceback.format_exc())
