@@ -75,6 +75,9 @@ class User(Alchemy_Base):
     def password_matches(self, password):
         return User.hash(password) == self.password_hash
 
+    def get_info(self):
+        return {'id': self.id, 'email': self.email, 'password_hash': self.password_hash}
+
     def __repr__(self):
         return 'User(id=%s, email="%s", password_hash="%s")'%(self.id,
                                                               self.email,
@@ -89,6 +92,10 @@ class Feedback(Alchemy_Base):
     type = sqlalchemy.Column(sqlalchemy.String(32))
     subject = sqlalchemy.Column(sqlalchemy.String(1024))
     description = sqlalchemy.Column(sqlalchemy.String(4096))
+
+    def get_info(self):
+        return {'id': self.id, 'user_id': self.user_id, 'type': self.type,
+                'subject': self.subject, 'description': self.description}
 
     def __repr__(self):
         return ('Feedback(id=%s, '
@@ -111,6 +118,10 @@ class Feedback_Relationship(Alchemy_Base):
                                 sqlalchemy.ForeignKey('feedback.id'))
     to_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey('feedback.id'))
+
+    def get_info(self):
+        return {'id': self.id, 'from_type': self.from_type, 'to_type': self.to_type,
+                'from_id': self.from_id, 'to_id': self.to_id}
 
     def __repr__(self):
         return ('Feedback_Relationship(id=%s, ' +
@@ -136,6 +147,11 @@ class Account(Alchemy_Base):
     asset = sqlalchemy.orm.relationship('Account')
     debts = sqlalchemy.orm.relationship('Account', remote_side=[id])
 
+    def get_info(self):
+        return {'id': self.id, 'name': self.name, 'url': self.url,
+                'info': self.info, 'interest_rate': self.interest_rate,
+                'type': self.type, 'user_id': self.user_id, 'asset_id': self.asset_id}
+
     def __repr__(self):
         return ('Account(id=%s, name="%s", ' +
                'type="%s", interest rate=%0.3f%% url="%s", info="%s", ' +
@@ -160,6 +176,14 @@ class Statement(Alchemy_Base):
     account_id = sqlalchemy.Column(sqlalchemy.Integer,
                                    sqlalchemy.ForeignKey('account.id'))
     account = sqlalchemy.orm.relationship("Account", backref="statements")
+
+    def get_info(self):
+        return {'id': self.id, 'start': self.start, 'due': self.due,
+                'end': self.end, 'fees': self.fees,
+                'interest': self.interest, 'deposits': self.deposits,
+                'withrawals': self.withrawals,
+                'start_balance': self.start_balance, 'end_balance': self.end_balance,
+                'account_id': self.account_id}
 
     def __repr__(self):
         return ('Statement(id=%s, start="%s", end="%s", ' +
@@ -369,7 +393,9 @@ class Connect(threading.Thread):
         found = query.filter_by(sqlalchemy.or_(from_id=feedback_id,
                                                to_id=feedback_id)).all()
         return [{'from_id': s.from_id, 'to_id': s.to_id,
-                 'from_type': s.from_type, 'to_type': s.to_type}
+                 'from_type': s.from_type, 'to_type': s.to_type,
+                 'from': Feedback.query.get(s.from_id).get_info(),
+                 'to': Feedback.query.get(s.to_id).get_info()}
                 for s in found]
 
     def list_related_feedback(self, feedback_id):
