@@ -105,7 +105,8 @@ class Feedback(Alchemy_Base):
 class Feedback_Relationship(Alchemy_Base):
     __tablename__ = 'feedback_relationship'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    type = sqlalchemy.Column(sqlalchemy.String(32))
+    from_type = sqlalchemy.Column(sqlalchemy.String(32))
+    to_type = sqlalchemy.Column(sqlalchemy.String(32))
     from_id = sqlalchemy.Column(sqlalchemy.Integer,
                                 sqlalchemy.ForeignKey('feedback.id'))
     to_id = sqlalchemy.Column(sqlalchemy.Integer,
@@ -113,9 +114,11 @@ class Feedback_Relationship(Alchemy_Base):
 
     def __repr__(self):
         return ('Feedback_Relationship(id=%s, ' +
-                'type="%s", ' +
+                'from_type="%s", ' +
+                'to_type="%s", ' +
                 'from_id=%d, ' +
-                'to_id=%d)')%(self.id, self.type, self.from_id, self.to_id)
+                'to_id=%d)')%(self.id, self.from_type, self.to_type,
+                              self.from_id, self.to_id)
 
 
 class Account(Alchemy_Base):
@@ -348,22 +351,25 @@ class Connect(threading.Thread):
         self.__q.put((self.__list_feedback, results, user_id))
         return results.get()
 
-    def __relate_feedback(self, from_id, to_id, type):
-        info = {'from_id': from_id, 'to_id': to_id, 'type': type}
+    def __relate_feedback(self, from_id, to_id, from_type, to_type):
+        info = {'from_id': from_id, 'to_id': to_id,
+                'from_type': from_type, 'to_type': to_type}
         statement = self.__add(Feedback_Relationship(**info))
         info['id'] = statement.id
         return info
 
-    def relate_feedback(self, from_id, to_id, type):
+    def relate_feedback(self, from_id, to_id, from_type, to_type):
         results = queue.Queue()
-        self.__q.put((self.__relate_feedback, results, from_id, to_id, type))
+        self.__q.put((self.__relate_feedback, results, from_id, to_id,
+                      from_type, to_type))
         return results.get()
 
     def __list_related_feedback(self, feedback_id):
         query = self.__session.query(Feedback_Relationship)
         found = query.filter_by(sqlalchemy.or_(from_id=feedback_id,
                                                to_id=feedback_id)).all()
-        return [{'from_id': s.from_id, 'to_id': s.to_id, 'type': s.type}
+        return [{'from_id': s.from_id, 'to_id': s.to_id,
+                 'from_type': s.from_type, 'to_type': s.to_type}
                 for s in found]
 
     def list_related_feedback(self, feedback_id):
