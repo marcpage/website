@@ -184,55 +184,34 @@ def test_db_contents_statements(database):
 
     if len(may_statement) != 1:
         raise SyntaxError('May statement count is off, expected 1 got '
-                          + len(may_statement))
+                          + str(len(may_statement)))
 
     if (may_statement[0]['end'] != datetime.date(2020, 5, 31)
-        or may_statement[0]['fees'] != 311.0
-        or may_statement[0]['deposits'] != 12345.0
-        or may_statement[0]['withdrawals'] != 45678.0
-        or may_statement[0]['start_balance'] != 133531.0
-        or may_statement[0]['end_balance'] != 100000.0
-        or may_statement[0]['interest'] != 113.0):
+        or may_statement[0]['fees'] != 3.11
+        or may_statement[0]['deposits'] != 123.45
+        or may_statement[0]['withdrawals'] != 456.78
+        or may_statement[0]['start_balance'] != 1335.31
+        or may_statement[0]['end_balance'] != 1000.00
+        or may_statement[0]['interest'] != 1.13):
         raise SyntaxError('May statement is not what we expected: '
                           + str(may_statement[0]))
 
-    may_statement = [s for s in my_savings_statements
-                     if s['start'] == datetime.date(2020, 6, 30)]
+    june_statement = [s for s in my_savings_statements
+                     if s['start'] == datetime.date(2020, 6, 1)]
 
-    if len(may_statement) != 1:
-        raise SyntaxError('May statement count is off, expected 1 got '
-                          + len(may_statement))
+    if len(june_statement) != 1:
+        raise SyntaxError('June statement count is off, expected 1 got '
+                          + str(len(june_statement)))
 
-    if (june_statement[0]['end'] != datetime.date(2020, 6, 1)
-        or june_statement[0]['fees'] != 311.0
-        or june_statement[0]['deposits'] != 12345.0
-        or june_statement[0]['withdrawals'] != 45678.0
-        or june_statement[0]['start_balance'] != 100000.0
-        or june_statement[0]['end_balance'] != 66469.0
-        or june_statement[0]['interest'] != 113.0):
+    if (june_statement[0]['end'] != datetime.date(2020, 6, 30)
+        or june_statement[0]['fees'] != 3.11
+        or june_statement[0]['deposits'] != 123.45
+        or june_statement[0]['withdrawals'] != 456.78
+        or june_statement[0]['start_balance'] != 1000.00
+        or june_statement[0]['end_balance'] != 664.69
+        or june_statement[0]['interest'] != 1.13):
         raise SyntaxError('June statement is not what we expected: '
                           + str(june_statement[0]))
-    """
-    [{'account_id': 1,
-        'start': datetime.date(2020, 6, 1),
-        'end': datetime.date(2020, 6, 30),
-        'fees': 31100.0,
-        'interest': 11300.0,
-        'deposits': 1234500.0,
-        'withdrawals': 4567800.0,
-        'start_balance': 10000000.0,
-        'end_balance': 6646900.0,
-        'id': 1},
-     {'account_id': 1,
-      'start': datetime.date(2020, 5, 1),
-      'end': datetime.date(2020, 5, 31),
-      'fees': 31100.0,
-      'interest': 11300.0,
-      'deposits': 1234500.0,
-      'withdrawals': 4567800.0,
-      'start_balance': 13353100.0,
-      'end_balance': 10000000.0,
-      'id': 2}]"""
 
 
 def test_fill_db(database):

@@ -26,7 +26,7 @@ class Money(sqlalchemy.types.TypeDecorator):
         return int(value * 100.0 + 0.005)
 
     def process_result_value(self, value, dialect):
-        return value * 100.0
+        return value / 100.0
 
 
 class Date(sqlalchemy.types.TypeDecorator):
