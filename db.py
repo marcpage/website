@@ -359,6 +359,18 @@ class Connect(threading.Thread):
         self.__q.put((self.__relate_feedback, results, from_id, to_id, type))
         return results.get()
 
+    def __list_related_feedback(self, feedback_id):
+        query = self.__session.query(Feedback_Relationship)
+        found = query.filter_by(sqlalchemy.or_(from_id=feedback_id,
+                                               to_id=feedback_id)).all()
+        return [{'from_id': s.from_id, 'to_id': s.to_id, 'type': s.type}
+                for s in found]
+
+    def list_related_feedback(self, feedback_id):
+        results = queue.Queue()
+        self.__q.put((self.__list_related_feedback, results, feedback_id))
+        return results.get()
+
     def run(self):
         engine = self.__init()
 
