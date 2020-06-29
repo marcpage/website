@@ -81,6 +81,43 @@ class User(Alchemy_Base):
                                                               self.password_hash)
 
 
+class Feedback(Alchemy_Base):
+    __tablename__ = 'feedback'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
+    user = sqlalchemy.orm.relationship('User', backref='feedback')
+    type = sqlalchemy.Column(sqlalchemy.String(32))
+    subject = sqlalchemy.Column(sqlalchemy.String(1024))
+    description = sqlalchemy.Column(sqlalchemy.String(4096))
+
+    def __repr__(self):
+        return ('Feedback(id=%s, '
+                + 'user_id=%d '
+                + 'type="%s", '
+                + 'subject="%s", '
+                + 'description="%s")')%(self.id,
+                                        self.user_id,
+                                        self.type,
+                                        self.subject,
+                                        self.description)
+
+
+class Feedback_Relationship(Alchemy_Base):
+    __tablename__ = 'feedback_relationship'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    type = sqlalchemy.Column(sqlalchemy.String(32))
+    from_id = sqlalchemy.Column(sqlalchemy.Integer,
+                                sqlalchemy.ForeignKey('feedback.id'))
+    to_id = sqlalchemy.Column(sqlalchemy.Integer,
+                                sqlalchemy.ForeignKey('feedback.id'))
+
+    def __repr__(self):
+        return ('Feedback_Relationship(id=%s, ' +
+                'type="%s", ' +
+                'from_id=%d, ' +
+                'to_id=%d)')%(self.id, self.type, self.from_id, self.to_id)
+
+
 class Account(Alchemy_Base):
     __tablename__ = 'account'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
@@ -218,6 +255,21 @@ class Connect(threading.Thread):
         self.__q.put(('statement','list', results, account_id))
         return results.get()
 
+    def add_feedback(self, user_id, type, subject, description):
+        results = queue.Queue()
+        self.__q.put(('feedback','add', results, user_id, type, subject, description))
+        return results.get()
+
+    def list_feedback(self, user_id):
+        results = queue.Queue()
+        self.__q.put(('feedback','list', results, user_id))
+        return results.get()
+
+    def relate_feedback(self, from_id, to_id, type):
+        results = queue.Queue()
+        self.__q.put(('feedback','relate', results, from_id, to_id, type))
+        return results.get()
+
     def __add_user(self, email, password):
         user = self.__find_user(email=email)
 
@@ -287,6 +339,26 @@ class Connect(threading.Thread):
                          'id': s.id}
                         for s in found]
 
+    def __add_feedback(self, user_id, type, subject, description):
+        info = {'user_id': user_id, 'type': type, 'subject': subject, 'description': description}
+        statement = self.__add(Feedback(**info))
+        info['id'] = statement.id
+        return info
+
+    def __list_feedback(self, user_id):
+        found = self.__session.query(Feedback).filter_by(user_id
+                                                        =user_id).all()
+        return [{'user_id': s.user_id,
+                 'type': s.type, 'subject': s.subject, 'description': s.description,
+                 'id': s.id}
+                for s in found]
+
+    def __relate_feedback(self, from_id, to_id, type):
+        info = {'from_id': from_id, 'to_id': to_id, 'type': type}
+        statement = self.__add(Feedback_Relationship(**info))
+        info['id'] = statement.id
+        return info
+
     def run(self):
         engine = self.__init()
 
@@ -304,6 +376,10 @@ class Connect(threading.Thread):
                          'account': {
                             'add': self.__add_account,
                             'list': self.__list_accounts},
+                         'feedback': {
+                            'add': self.__add_feedback,
+                            'list': self.__list_feedback,
+                            'relate': self.__relate_feedback},
                          'statement': {
                             'add': self.__add_statement,
                             'list': self.__list_statements}}
