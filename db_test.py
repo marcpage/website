@@ -349,6 +349,59 @@ def test_db_contents_feedback(database):
         raise SyntaxError('We expected 1 related but got' +
                           ' %d'%(len(your_request_related_your_bug)))
 
+    my_vote_my_bug = database.feedback_vote(myself['id'], my_bug[0]['id'])
+    my_vote_my_request = database.feedback_vote(myself['id'], my_request[0]['id'])
+    my_vote_your_bug = database.feedback_vote(myself['id'], your_bug[0]['id'])
+    my_vote_your_request = database.feedback_vote(myself['id'], your_request[0]['id'])
+    your_vote_my_bug = database.feedback_vote(you['id'], my_bug[0]['id'])
+    your_vote_my_request = database.feedback_vote(you['id'], my_request[0]['id'])
+    your_vote_your_bug = database.feedback_vote(you['id'], your_bug[0]['id'])
+    your_vote_your_request = database.feedback_vote(you['id'], your_request[0]['id'])
+    my_bug_votes = database.feedback_all_votes(my_bug[0]['id'])
+    my_request_votes = database.feedback_all_votes(my_request[0]['id'])
+    your_bug_votes = database.feedback_all_votes(your_bug[0]['id'])
+    your_request_votes = database.feedback_all_votes(your_request[0]['id'])
+
+    if my_vote_my_bug['votes'] != 10:
+        raise SyntaxError('Expected 10 but got %d'%(my_vote_my_bug['votes']))
+
+    if my_vote_my_request['votes'] != 40:
+        raise SyntaxError('Expected 40 but got %d'%(my_vote_my_request['votes']))
+
+    if my_vote_your_bug['votes'] != 20:
+        raise SyntaxError('Expected 20 but got %d'%(my_vote_your_bug['votes']))
+
+    if my_vote_your_request['votes'] != 30:
+        raise SyntaxError('Expected 30 but got %d'%(my_vote_your_request['votes']))
+
+    if your_vote_my_bug['votes'] != 100:
+        raise SyntaxError('Expected 100 but got %d'%(your_vote_my_bug['votes']))
+
+    if your_vote_my_request['votes'] != 0:
+        raise SyntaxError('Expected 0 but got %d'%(your_vote_my_request['votes']))
+
+    if your_vote_your_bug['votes'] != 200:
+        raise SyntaxError('Expected 200 but got %d'%(your_vote_your_bug['votes']))
+
+    if your_vote_your_request['votes'] != 300:
+        raise SyntaxError('Expected 300 but got %d'%(your_vote_your_request['votes']))
+
+    if sum([x['votes'] for x in my_bug_votes]) != 110:
+        raise SyntaxError('Expected 110 but got ' +
+                          '%d'%(sum([x['votes'] for x in my_bug_votes])))
+
+    if sum([x['votes'] for x in my_request_votes]) != 40:
+        raise SyntaxError('Expected 40 but got ' +
+                          '%d'%(sum([x['votes'] for x in my_request_votes])))
+
+    if sum([x['votes'] for x in your_bug_votes]) != 220:
+        raise SyntaxError('Expected 220 but got ' +
+                          '%d'%(sum([x['votes'] for x in your_bug_votes])))
+
+    if sum([x['votes'] for x in your_request_votes]) != 330:
+        raise SyntaxError('Expected 330 but got ' +
+                          '%d'%(sum([x['votes'] for x in your_request_votes])))
+
 
 def test_fill_db(database):
     test_fill_db_users(database)

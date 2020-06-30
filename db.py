@@ -432,14 +432,14 @@ class Connect(threading.Thread):
                                 user_id=user_id).one_or_none()
 
         if not found:
-            found = Feedback_Votes(user_id=user_id,
-                                   feedback_id=feedback_id,
-                                   votes=votes if votes else 0)
+            found = self.__add(Feedback_Votes(user_id=user_id,
+                                              feedback_id=feedback_id,
+                                              votes=votes if votes else 0))
 
         elif votes:
             found.votes = votes
 
-        return found
+        return found.get_info()
 
     def feedback_vote(self, user_id, feedback_id, votes=None):
         results = queue.Queue()
