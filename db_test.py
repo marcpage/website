@@ -219,7 +219,74 @@ def test_db_contents_statements(database):
 
 
 def test_fill_db_feedback(database):
-    pass
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    f1 = database.add_feedback(myself['id'], 'BUG', 'error', 'error when I do stuff')
+    f2 = database.add_feedback(you['id'], 'BUG', 'error', 'error when I do stuff')
+    f3 = database.add_feedback(you['id'], 'REQUEST', 'auto report errors', 'why users')
+    f4 = database.add_feedback(myself['id'], 'REQUEST', 'errors ui', 'users can see')
+    database.relate_feedback(f1['id'], f2['id'], 'duplicate', 'duplicate')
+    database.relate_feedback(f1['id'], f3['id'], 'related', 'related')
+    database.relate_feedback(f2['id'], f3['id'], 'related', 'related')
+    database.relate_feedback(f3['id'], f4['id'], 'predecessor', 'successor')
+    database.feedback_vote(myself['id'], f1['id'], 10)
+    database.feedback_vote(myself['id'], f2['id'], 20)
+    database.feedback_vote(myself['id'], f3['id'], 30)
+    database.feedback_vote(myself['id'], f4['id'], 40)
+    database.feedback_vote(you['id'], f1['id'], 100)
+    database.feedback_vote(you['id'], f2['id'], 200)
+    database.feedback_vote(you['id'], f3['id'], 300)
+
+
+def test_db_contents_feedback(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    my_feedback = database.list_feedback(myself['id'])
+    my_bug = [x for x in my_feedback if x['type'] == 'BUG']
+    my_request = [x for x in my_feedback if x['type'] == 'REQUEST']
+    your_feedback = database.list_feedback(you['id'])
+    your_bug = [x for x in your_feedback if x['type'] == 'BUG']
+    your_request = [x for x in your_feedback if x['type'] == 'REQUEST']
+
+    if len(my_feedback) != 2:
+        raise SyntaxError('Expected 2 feedback but got %d'%(len(my_feedback)))
+
+    if len(my_bug) != 1:
+        raise SyntaxError('Expected 1 bug feedback but got %d'%(len(my_bug)))
+
+    if len(my_request) != 1:
+        raise SyntaxError('Expected 1 request feedback but got %d'%(len(my_request)))
+
+    if (my_bug[0]['type'] != 'BUG'
+        or my_bug[0]['subject'] != 'error'
+        or my_bug[0]['description'] != 'error when I do stuff'):
+        raise SyntaxError('feedback was not as we expected: ' + str(my_bug))
+
+    if (my_request[0]['type'] != 'REQUEST'
+        or my_request[0]['subject'] != 'errors ui'
+        or my_request[0]['description'] != 'users can see'):
+        raise SyntaxError('feedback was not as we expected: ' + str(my_request))
+
+    if len(your_feedback) != 2:
+        raise SyntaxError('Expected 2 feedback but got %d'%(len(your_feedback)))
+
+    if len(your_bug) != 1:
+        raise SyntaxError('Expected 1 bug feedback but got %d'%(len(your_bug)))
+
+    if len(your_request) != 1:
+        raise SyntaxError('Expected 1 request feedback but got %d'%(len(your_request)))
+
+    if (your_bug[0]['type'] != 'BUG'
+        or your_bug[0]['subject'] != 'error'
+        or your_bug[0]['description'] != 'error when I do stuff'):
+        raise SyntaxError('feedback was not as we expected: ' + str(your_bug))
+
+    if (your_request[0]['type'] != 'REQUEST'
+        or your_request[0]['subject'] != 'auto report errors'
+        or your_request[0]['description'] != 'why users'):
+        raise SyntaxError('feedback was not as we expected: ' + str(your_request))
 
 
 def test_fill_db(database):
@@ -233,6 +300,7 @@ def test_db_contents(database):
     test_db_contents_users(database)
     test_db_contents_accounts(database)
     test_db_contents_statements(database)
+    test_db_contents_feedback(database)
 
 
 def test(url):

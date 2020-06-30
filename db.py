@@ -425,8 +425,8 @@ class Connect(threading.Thread):
 
     def __feedback_vote(self, user_id, feedback_id, votes=None):
         query = self.__session.query(Feedback_Votes)
-        found = query.filter_by(sqlalchemy.and_(feedback_id=feedback_id,
-                                                user_id=user_id)).one_or_none()
+        found = query.filter_by(feedback_id=feedback_id,
+                                user_id=user_id).one_or_none()
 
         if not found:
             found = Feedback_Votes(user_id=user_id,
@@ -440,7 +440,7 @@ class Connect(threading.Thread):
 
     def feedback_vote(self, user_id, feedback_id, votes=None):
         results = queue.Queue()
-        self.__q.put((self.__list_related_feedback, results, user_id, feedback_id, votes))
+        self.__q.put((self.__feedback_vote, results, user_id, feedback_id, votes))
         return results.get()
 
     def __feedback_all_votes(self, feedback_id):
@@ -450,7 +450,7 @@ class Connect(threading.Thread):
 
     def feedback_all_votes(self, feedback_id):
         results = queue.Queue()
-        self.__q.put((self.__list_related_feedback, results, feedback_id))
+        self.__q.put((self.__feedback_all_votes, results, feedback_id))
         return results.get()
 
     def run(self):
@@ -467,7 +467,7 @@ class Connect(threading.Thread):
 
             except:
                 logging.error(traceback.format_exc())
-                command[2].put((traceback.format_exc(),))
+                command[1].put((traceback.format_exc(),))
 
         self.__session.close()
 
