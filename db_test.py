@@ -409,11 +409,8 @@ def test_fill_db_points(database):
     you = database.login_user('u@me.com', 'toomanysecrets')
 
     database.user_points(myself['id'], 1, 'daily visit')
-    time.sleep(1.0)
     database.user_points(myself['id'], 10, 'debt free')
-    time.sleep(1.0)
     database.user_points(you['id'], 5, 'emergency funded')
-    time.sleep(1.0)
     database.user_points(you['id'], 20, 'yep')
 
 
