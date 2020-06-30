@@ -288,6 +288,33 @@ def test_db_contents_feedback(database):
         or your_request[0]['description'] != 'why users'):
         raise SyntaxError('feedback was not as we expected: ' + str(your_request))
 
+    my_bug_related = database.list_related_feedback(my_bug[0]['id'])
+    my_request_related = database.list_related_feedback(my_request[0]['id'])
+    your_bug_related = database.list_related_feedback(your_bug[0]['id'])
+    your_request_related = database.list_related_feedback(your_request[0]['id'])
+
+    print(my_bug_related)
+    print(my_request_related)
+    print(your_bug_related)
+    print(your_request_related)
+    """
+    [
+        {'from_id': 1, 'to_id': 2, 'from_type': 'duplicate', 'to_type': 'duplicate', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}},
+        {'from_id': 1, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}}
+    ]
+    [
+        {'from_id': 3, 'to_id': 4, 'from_type': 'predecessor', 'to_type': 'successor', 'from': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}, 'to': {'id': 4, 'user_id': 1, 'type': 'REQUEST', 'subject': 'errors ui', 'description': 'users can see'}}
+    ]
+    [
+        {'from_id': 1, 'to_id': 2, 'from_type': 'duplicate', 'to_type': 'duplicate', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}},
+        {'from_id': 2, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}}
+    ]
+    [
+        {'from_id': 1, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}},
+        {'from_id': 2, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}},
+        {'from_id': 3, 'to_id': 4, 'from_type': 'predecessor', 'to_type': 'successor', 'from': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}, 'to': {'id': 4, 'user_id': 1, 'type': 'REQUEST', 'subject': 'errors ui', 'description': 'users can see'}}
+    ]
+    """
 
 def test_fill_db(database):
     test_fill_db_users(database)

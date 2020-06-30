@@ -410,12 +410,15 @@ class Connect(threading.Thread):
 
     def __list_related_feedback(self, feedback_id):
         query = self.__session.query(Feedback_Relationship)
-        found = query.filter_by(sqlalchemy.or_(from_id=feedback_id,
-                                               to_id=feedback_id)).all()
+        found = query.filter(sqlalchemy.or_(Feedback_Relationship.from_id
+                                               ==feedback_id,
+                                               Feedback_Relationship.to_id
+                                               ==feedback_id)).all()
+        feedback_query = self.__session.query(Feedback)
         return [{'from_id': s.from_id, 'to_id': s.to_id,
                  'from_type': s.from_type, 'to_type': s.to_type,
-                 'from': Feedback.query.get(s.from_id).get_info(),
-                 'to': Feedback.query.get(s.to_id).get_info()}
+                 'from': feedback_query.get(s.from_id).get_info(),
+                 'to': feedback_query.get(s.to_id).get_info()}
                 for s in found]
 
     def list_related_feedback(self, feedback_id):
