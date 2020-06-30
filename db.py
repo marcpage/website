@@ -49,7 +49,7 @@ class Date(sqlalchemy.types.TypeDecorator):
         try:  # if it is a string, parse it, otherwise it must be datetime object
             return datetime.datetime.strptime(value, "%Y/%m/%d")
         except TypeError:
-            return from_user
+            return value
 
     def process_result_value(self, value, dialect):
         return value
@@ -130,6 +130,26 @@ class Feedback_Relationship(Alchemy_Base):
                 'from_id=%d, ' +
                 'to_id=%d)')%(self.id, self.from_type, self.to_type,
                               self.from_id, self.to_id)
+
+
+class Feedback_Votes(Alchemy_Base):
+    __tablename__ = 'feedback_votes'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
+    user = sqlalchemy.orm.relationship('User', backref='votes')
+    feedback_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('feedback.id'))
+    feedback = sqlalchemy.orm.relationship('Feedback', backref='votes')
+    votes = sqlalchemy.Column(sqlalchemy.Integer)
+
+    def get_info(self):
+        return {'id': self.id, 'user_id': self.user_id, 'feedback_id': self.feedback_id,
+                'votes': self.votes}
+
+    def __repr__(self):
+        return ('Feedback_Votes(id=%s, ' +
+                'user_id=%d, ' +
+                'feedback_id=%d, ' +
+                'votes=%d)')%(self.id, self.user_id, self.feedback_id,self.votes)
 
 
 class Account(Alchemy_Base):
