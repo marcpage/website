@@ -293,28 +293,62 @@ def test_db_contents_feedback(database):
     your_bug_related = database.list_related_feedback(your_bug[0]['id'])
     your_request_related = database.list_related_feedback(your_request[0]['id'])
 
-    print(my_bug_related)
-    print(my_request_related)
-    print(your_bug_related)
-    print(your_request_related)
-    """
-    [
-        {'from_id': 1, 'to_id': 2, 'from_type': 'duplicate', 'to_type': 'duplicate', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}},
-        {'from_id': 1, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}}
-    ]
-    [
-        {'from_id': 3, 'to_id': 4, 'from_type': 'predecessor', 'to_type': 'successor', 'from': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}, 'to': {'id': 4, 'user_id': 1, 'type': 'REQUEST', 'subject': 'errors ui', 'description': 'users can see'}}
-    ]
-    [
-        {'from_id': 1, 'to_id': 2, 'from_type': 'duplicate', 'to_type': 'duplicate', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}},
-        {'from_id': 2, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}}
-    ]
-    [
-        {'from_id': 1, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 1, 'user_id': 1, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}},
-        {'from_id': 2, 'to_id': 3, 'from_type': 'related', 'to_type': 'related', 'from': {'id': 2, 'user_id': 2, 'type': 'BUG', 'subject': 'error', 'description': 'error when I do stuff'}, 'to': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}},
-        {'from_id': 3, 'to_id': 4, 'from_type': 'predecessor', 'to_type': 'successor', 'from': {'id': 3, 'user_id': 2, 'type': 'REQUEST', 'subject': 'auto report errors', 'description': 'why users'}, 'to': {'id': 4, 'user_id': 1, 'type': 'REQUEST', 'subject': 'errors ui', 'description': 'users can see'}}
-    ]
-    """
+    if len(my_bug_related) != 2:
+        raise SyntaxError('We expected 2 related but got %d'%(len(my_bug_related)))
+
+    if len(my_request_related) != 1:
+        raise SyntaxError('We expected 1 related but got %d'%(len(my_request_related)))
+
+    if len(your_bug_related) != 2:
+        raise SyntaxError('We expected 2 related but got %d'%(len(your_bug_related)))
+
+    if len(your_request_related) != 3:
+        raise SyntaxError('We expected 3 related but got' +
+                          ' %d'%(len(your_request_related)))
+
+    my_bug_related_duplicate = [x for x in my_bug_related
+                                if x['to_type'] == 'duplicate']
+    my_bug_related_related = [x for x in my_bug_related
+                              if x['to_type'] == 'related']
+    your_bug_related_duplicate = [x for x in your_bug_related
+                                  if x['to_type'] == 'duplicate']
+    your_bug_related_related = [x for x in your_bug_related
+                                if x['to_type'] == 'related']
+    your_request_related_successor = [x for x in your_request_related
+                                      if x['to_type'] == 'successor']
+    your_request_related_my_bug = [x for x in your_request_related
+                                   if x['from_id'] == my_bug[0]['id']]
+    your_request_related_your_bug = [x for x in your_request_related
+                                     if x['from_id'] == your_bug[0]['id']]
+
+    if len(my_bug_related_duplicate) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(my_bug_related_duplicate)))
+
+    if len(my_bug_related_related) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(my_bug_related_related)))
+
+    if len(your_bug_related_duplicate) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(your_bug_related_duplicate)))
+
+    if len(your_bug_related_related) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(your_bug_related_related)))
+
+    if len(your_request_related_successor) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(your_request_related_successor)))
+
+    if len(your_request_related_my_bug) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(your_request_related_my_bug)))
+
+    if len(your_request_related_your_bug) != 1:
+        raise SyntaxError('We expected 1 related but got' +
+                          ' %d'%(len(your_request_related_your_bug)))
+
 
 def test_fill_db(database):
     test_fill_db_users(database)
