@@ -428,11 +428,13 @@ def test(url):
         test_db_contents(database)
 
 
+def sqlite_new_file(path):
+    if os.path.isfile(path):
+        os.unlink(path)
+
+    return 'sqlite:///' + path
+
+
 if __name__ == '__main__':
-    test_path = '/tmp/db.test.sqlite3'
-
-    if os.path.isfile(test_path):
-        os.unlink(test_path)
-
-    test('sqlite:///' + test_path)
+    test(sqlite_new_file('/tmp/db.test.sqlite3'))
 
