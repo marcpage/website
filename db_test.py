@@ -4,6 +4,7 @@ import db
 import logging
 import os
 import datetime
+import time
 
 def test_fill_db_users(database):
     myself = database.add_user('me@me.com', 'secret')
@@ -408,8 +409,11 @@ def test_fill_db_points(database):
     you = database.login_user('u@me.com', 'toomanysecrets')
 
     database.user_points(myself['id'], 1, 'daily visit')
+    time.sleep(1.0)
     database.user_points(myself['id'], 10, 'debt free')
+    time.sleep(1.0)
     database.user_points(you['id'], 5, 'emergency funded')
+    time.sleep(1.0)
     database.user_points(you['id'], 20, 'yep')
 
 
@@ -451,6 +455,15 @@ def test_db_contents_points(database):
 
     if len(your_yep) != 1:
         raise SyntaxError('Expected 1 but got %d'%(len(your_yep)))
+
+    if my_daily_visit[0]['when'] >= my_debt_free[0]['when']:
+        raise SyntaxError('Wrong order %s >= %s'%(my_daily_visit, my_debt_free))
+
+    if my_debt_free[0]['when'] >= your_emergency[0]['when']:
+        raise SyntaxError('Wrong order %s >= %s'%(my_daily_visit, my_debt_free))
+
+    if your_emergency[0]['when'] >= your_yep[0]['when']:
+        raise SyntaxError('Wrong order %s >= %s'%(my_daily_visit, my_debt_free))
 
 
 def test_fill_db(database):
