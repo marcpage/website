@@ -469,6 +469,7 @@ def test_fill_db(database):
     test_fill_db_statements(database)
     test_fill_db_feedback(database)
     test_fill_db_points(database)
+    database.flush()
 
 
 def test_db_contents(database):

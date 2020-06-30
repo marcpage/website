@@ -491,6 +491,15 @@ class Connect(threading.Thread):
         self.__q.put((self.__user_points, results, user_id, awarded, reason))
         return results.get()
 
+    def __flush(self):
+        self.__session.commit()
+        return None
+
+    def flush(self):
+        results = queue.Queue()
+        self.__q.put((self.__flush, results))
+        return results.get()
+
     def run(self):
         engine = self.__init()
 
