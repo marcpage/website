@@ -84,6 +84,25 @@ class User(Alchemy_Base):
                                                               self.password_hash)
 
 
+class Points(Alchemy_Base):
+    __tablename__ = 'points'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
+    user = sqlalchemy.orm.relationship('User', backref='points')
+    awarded = sqlalchemy.Column(sqlalchemy.Integer)
+    reason = sqlalchemy.Column(sqlalchemy.String(1024))
+    when = sqlalchemy.Column(sqlalchemy.DateTime)
+
+    def get_info(self):
+        return {'id': self.id, 'user_id': self.user_id, 'awarded': self.awarded,
+                'reason': self.reason, 'when': self.when}
+
+    def __repr__(self):
+        return ('Points(id=%s, user_id=%d, awarded=%d, when="%s"' +
+               'reason="%s")')%(self.id, self.user_id, self.awareded, self.when,
+                                self.reason)
+
+
 class Feedback(Alchemy_Base):
     __tablename__ = 'feedback'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
@@ -454,6 +473,22 @@ class Connect(threading.Thread):
     def feedback_all_votes(self, feedback_id):
         results = queue.Queue()
         self.__q.put((self.__feedback_all_votes, results, feedback_id))
+        return results.get()
+
+    def __user_points(self, user_id, awarded=None, reason=""):
+        if awarded:
+            created = self.__add(Points(user_id=user_id,
+                                        awarded=awarded,
+                                        when=datetime.datetime.now(),
+                                        reason=reason))
+            return created.get_info()
+
+        found = self.__session.query(Points).filter_by(user_id=user_id).all()
+        return [x.get_info() for x in found]
+
+    def user_points(self, user_id, awarded=None, reason=""):
+        results = queue.Queue()
+        self.__q.put((self.__user_points, results, user_id, awarded, reason))
         return results.get()
 
     def run(self):

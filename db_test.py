@@ -403,11 +403,62 @@ def test_db_contents_feedback(database):
                           '%d'%(sum([x['votes'] for x in your_request_votes])))
 
 
+def test_fill_db_points(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    database.user_points(myself['id'], 1, 'daily visit')
+    database.user_points(myself['id'], 10, 'debt free')
+    database.user_points(you['id'], 5, 'emergency funded')
+    database.user_points(you['id'], 20, 'yep')
+
+
+def test_db_contents_points(database):
+    myself = database.login_user('me@me.com', 'secret')
+    you = database.login_user('u@me.com', 'toomanysecrets')
+
+    my_points = database.user_points(myself['id'])
+    your_points = database.user_points(you['id'])
+
+    if len(my_points) != 2:
+        raise SyntaxError('Expected 2 but got %d'%(len(my_points)))
+
+    if len(your_points) != 2:
+        raise SyntaxError('Expected 2 but got %d'%(len(your_points)))
+
+    my_point_value = sum([x['awarded'] for x in my_points])
+    your_point_value = sum([x['awarded'] for x in your_points])
+
+    if my_point_value != 11:
+        raise SyntaxError('Expected 11 but got %d'%(my_point_value))
+
+    if your_point_value != 25:
+        raise SyntaxError('Expected 25 but got %d'%(your_point_value))
+
+    my_daily_visit = [x for x in my_points if x['reason'] == 'daily visit']
+    my_debt_free = [x for x in my_points if x['reason'] == 'debt free']
+    your_emergency = [x for x in your_points if x['reason'] == 'emergency funded']
+    your_yep = [x for x in your_points if x['reason'] == 'yep']
+
+    if len(my_daily_visit) != 1:
+        raise SyntaxError('Expected 1 but got %d'%(len(my_daily_visit)))
+
+    if len(my_debt_free) != 1:
+        raise SyntaxError('Expected 1 but got %d'%(len(my_debt_free)))
+
+    if len(your_emergency) != 1:
+        raise SyntaxError('Expected 1 but got %d'%(len(your_emergency)))
+
+    if len(your_yep) != 1:
+        raise SyntaxError('Expected 1 but got %d'%(len(your_yep)))
+
+
 def test_fill_db(database):
     test_fill_db_users(database)
     test_fill_db_accounts(database)
     test_fill_db_statements(database)
     test_fill_db_feedback(database)
+    test_fill_db_points(database)
 
 
 def test_db_contents(database):
@@ -415,6 +466,7 @@ def test_db_contents(database):
     test_db_contents_accounts(database)
     test_db_contents_statements(database)
     test_db_contents_feedback(database)
+    test_db_contents_points(database)
 
 
 def test(url):
