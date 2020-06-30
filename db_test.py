@@ -349,6 +349,10 @@ def test_db_contents_feedback(database):
         raise SyntaxError('We expected 1 related but got' +
                           ' %d'%(len(your_request_related_your_bug)))
 
+    my_bug_votes = database.feedback_all_votes(my_bug[0]['id'])
+    my_request_votes = database.feedback_all_votes(my_request[0]['id'])
+    your_bug_votes = database.feedback_all_votes(your_bug[0]['id'])
+    your_request_votes = database.feedback_all_votes(your_request[0]['id'])
     my_vote_my_bug = database.feedback_vote(myself['id'], my_bug[0]['id'])
     my_vote_my_request = database.feedback_vote(myself['id'], my_request[0]['id'])
     my_vote_your_bug = database.feedback_vote(myself['id'], your_bug[0]['id'])
@@ -357,10 +361,6 @@ def test_db_contents_feedback(database):
     your_vote_my_request = database.feedback_vote(you['id'], my_request[0]['id'])
     your_vote_your_bug = database.feedback_vote(you['id'], your_bug[0]['id'])
     your_vote_your_request = database.feedback_vote(you['id'], your_request[0]['id'])
-    my_bug_votes = database.feedback_all_votes(my_bug[0]['id'])
-    my_request_votes = database.feedback_all_votes(my_request[0]['id'])
-    your_bug_votes = database.feedback_all_votes(your_bug[0]['id'])
-    your_request_votes = database.feedback_all_votes(your_request[0]['id'])
 
     if my_vote_my_bug['votes'] != 10:
         raise SyntaxError('Expected 10 but got %d'%(my_vote_my_bug['votes']))
