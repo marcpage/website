@@ -423,6 +423,36 @@ class Connect(threading.Thread):
         self.__q.put((self.__list_related_feedback, results, feedback_id))
         return results.get()
 
+    def __feedback_vote(self, user_id, feedback_id, votes=None):
+        query = self.__session.query(Feedback_Votes)
+        found = query.filter_by(sqlalchemy.and_(feedback_id=feedback_id,
+                                                user_id=user_id)).one_or_none()
+
+        if not found:
+            found = Feedback_Votes(user_id=user_id,
+                                   feedback_id=feedback_id,
+                                   votes=votes if votes else 0)
+
+        elif votes:
+            found.votes = votes
+
+        return found
+
+    def feedback_vote(self, user_id, feedback_id, votes=None):
+        results = queue.Queue()
+        self.__q.put((self.__list_related_feedback, results, user_id, feedback_id, votes))
+        return results.get()
+
+    def __feedback_all_votes(self, feedback_id):
+        query = self.__session.query(Feedback_Votes)
+        found = query.filter_by(feedback_id=feedback_id).all()
+        return [v.get_info() for v in found]
+
+    def feedback_all_votes(self, feedback_id):
+        results = queue.Queue()
+        self.__q.put((self.__list_related_feedback, results, feedback_id))
+        return results.get()
+
     def run(self):
         engine = self.__init()
 

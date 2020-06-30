@@ -218,10 +218,15 @@ def test_db_contents_statements(database):
                           + str(june_statement[0]))
 
 
+def test_fill_db_feedback(database):
+    pass
+
+
 def test_fill_db(database):
     test_fill_db_users(database)
     test_fill_db_accounts(database)
     test_fill_db_statements(database)
+    test_fill_db_feedback(database)
 
 
 def test_db_contents(database):
