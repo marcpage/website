@@ -60,6 +60,7 @@ class User(Alchemy_Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     email = sqlalchemy.Column(sqlalchemy.String(50))
     password_hash = sqlalchemy.Column(sqlalchemy.String(64))
+    birthday = sqlalchemy.Column(Date())
 
     @staticmethod
     def hash(text):
@@ -79,9 +80,10 @@ class User(Alchemy_Base):
         return {'id': self.id, 'email': self.email, 'password_hash': self.password_hash}
 
     def __repr__(self):
-        return 'User(id=%s, email="%s", password_hash="%s")'%(self.id,
+        return 'User(id=%s, email="%s", password_hash="%s", birthday="%s")'%(self.id,
                                                               self.email,
-                                                              self.password_hash)
+                                                              self.password_hash,
+                                                              self.birthday)
 
 
 class Points(Alchemy_Base):
