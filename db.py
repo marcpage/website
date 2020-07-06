@@ -61,6 +61,7 @@ class User(Alchemy_Base):
     email = sqlalchemy.Column(sqlalchemy.String(50))
     password_hash = sqlalchemy.Column(sqlalchemy.String(64))
     birthday = sqlalchemy.Column(Date())
+    referrer_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('user.id'))
 
     @staticmethod
     def hash(text):
@@ -77,11 +78,16 @@ class User(Alchemy_Base):
         return User.hash(password) == self.password_hash
 
     def get_info(self):
-        return {'id': self.id, 'email': self.email, 'password_hash': self.password_hash}
+        return {'id': self.id,
+                'email': self.email,
+                'referrer_id': self.referrer_id,
+                'birthday': self.birthday,
+                'password_hash': self.password_hash}
 
     def __repr__(self):
-        return 'User(id=%s, email="%s", password_hash="%s", birthday="%s")'%(self.id,
+        return 'User(id=%s, email="%s", referrer_id=%s, password_hash="%s", birthday="%s")'%(self.id,
                                                               self.email,
+                                                              self.referrer_id,
                                                               self.password_hash,
                                                               self.birthday)
 
