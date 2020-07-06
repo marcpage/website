@@ -7,8 +7,8 @@ import datetime
 import time
 
 def test_fill_db_users(database):
-    myself = database.add_user('me@me.com', 'secret')
-    you = database.add_user('u@me.com', 'toomanysecrets')
+    myself = database.add_user(None, 'me@me.com', 'secret')
+    you = database.add_user(myself['id'], 'u@me.com', 'toomanysecrets')
 
 
 def test_db_contents_users(database):

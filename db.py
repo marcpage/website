@@ -293,7 +293,7 @@ class Connect(threading.Thread):
                                                  == sqlalchemy.func.lower(email)
                                                  ).one_or_none()
 
-    def __add_user(self, email, password):
+    def __add_user(self, referrer_id, email, password):
         user = self.__find_user(email=email)
 
         if user:
@@ -301,15 +301,30 @@ class Connect(threading.Thread):
 
         else:
             password_hash = password_hash=User.hash(password)
-            user = self.__add(User(email=email,
+            user = self.__add(User(email=email, referrer_id=referrer_id,
                                    password_hash=password_hash))
             return ({'id': user.id,
-                            'email': email,
-                            'valid': True})
+                     'referrer_id': user.referrer_id,
+                     'email': email,
+                     'valid': True})
 
-    def add_user(self, email, password):
+    def add_user(self, referrer_id, email, password):
         results = queue.Queue()
-        self.__q.put((self.__add_user, results, email, password))
+        self.__q.put((self.__add_user, results, referrer_id, email, password))
+        return results.get()
+
+    def __set_user_birthday(self, user_id, birthday):
+        user = self.__find_user(id=user_id)
+
+        if user:
+            user.birthday = birthday
+            return user.get_info()
+
+        return {'id': user_id, 'valid': False, 'birthday': birthday}
+
+    def set_user_birthday(self, user_id, birthday):
+        results = queue.Queue()
+        self.__q.put((self.__set_user_birthday, results, user_id, birthday))
         return results.get()
 
     def __login_user(self, email, password):
